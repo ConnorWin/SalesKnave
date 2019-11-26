@@ -1,11 +1,14 @@
 import { Display, Map } from "rot-js/lib/index";
+import { Player } from "./player";
 
 export class Game {
   private display: Display;
   private gameSize: { width: number; height: number };
   private map: { [key: string]: string | string[] } = {};
+  private player: Player;
 
   constructor() {
+    this.player = new Player();
     this.gameSize = { width: 75, height: 25 };
 
     this.display = new Display({
@@ -15,6 +18,12 @@ export class Game {
     });
     document.body.appendChild(this.display.getContainer());
     this._generateMap();
+
+    this.mainEventLoop();
+  }
+
+  private async mainEventLoop() {
+    while (true) {}
   }
 
   private _generateMap() {
