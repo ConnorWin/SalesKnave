@@ -2,12 +2,15 @@ import { Display, Map } from "rot-js/lib/index";
 import { Player } from "./player";
 import { Position } from "./postition";
 import { CharacterDrawling } from "./characterDrawling";
+import { Character } from "./character";
+import { Boss } from "./boss";
 
 export class Game {
   private display: Display;
   private gameSize: { width: number; height: number };
   private map: { [key: string]: string | string[] } = {};
   private player: Player;
+  private characters: Character[] = [];
 
   constructor() {
     this.gameSize = { width: 75, height: 25 };
@@ -23,7 +26,11 @@ export class Game {
       this,
       this.keyToPosition(Object.keys(this.map)[0])
     );
-    this.drawCharacter(this.player.currentPosition, this.player.drawling);
+    this.characters.push(this.player);
+    this.characters.push(
+      new Boss(this.keyToPosition(Object.keys(this.map)[20]))
+    );
+    this.updateMap();
     this.player.keyPressed.on("position changed", () => {
       this.updateMap();
     });
@@ -32,7 +39,12 @@ export class Game {
   private updateMap() {
     this.display.clear();
     this._drawWholeMap();
-    this.drawCharacter(this.player.currentPosition, this.player.drawling);
+    this.characters.forEach(character => {
+      this.drawCharacter(
+        character.currentPosition,
+        character.characterDrawling
+      );
+    });
   }
 
   private _generateMap() {

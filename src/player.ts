@@ -3,17 +3,15 @@ import { CharacterDrawling } from "./characterDrawling";
 import { Position } from "./postition";
 import { Game } from "./game";
 import { EventEmitter } from "events";
-
-export class Player {
+import { Character } from "./character";
+export class Player extends Character {
   private keyMap: { [key: number]: number };
-
-  public drawling: CharacterDrawling;
-  public currentPosition: Position;
+  private game: Game;
   public keyPressed: EventEmitter = new EventEmitter();
 
-  constructor(public game: Game, position: Position) {
-    this.drawling = new CharacterDrawling("@", "#ff0", "#0000");
-    this.currentPosition = position;
+  constructor(game: Game, position: Position) {
+    super(new CharacterDrawling("@", "#ff0", "#0000"), position);
+    this.game = game;
     this.initializeKeyMap();
     this.addInputListener();
   }
