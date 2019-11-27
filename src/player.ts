@@ -1,37 +1,47 @@
-import { KEYS } from "rot-js";
+import { KEYS, DIRS } from "rot-js";
 import { CharacterDrawling } from "./characterDrawling";
+import { Position } from "./postition";
+import { Game } from "./game";
 
 export class Player {
   private keyMap: { [key: number]: number };
 
   public drawling: CharacterDrawling;
-  public xPosition: number;
-  public yPosition: number;
+  public currentPosition: Position;
 
-  constructor() {
-    this.drawling = new CharacterDrawling("@", "#ff0");
+  constructor(public game: Game, position: Position) {
+    this.drawling = new CharacterDrawling("@", "#ff0", "#0000");
+    this.currentPosition = position;
     this.initializeKeyMap();
     this.addInputListener();
   }
 
   private initializeKeyMap() {
     this.keyMap = {};
-    this.keyMap[KEYS.VK_W] = 87;
-    this.keyMap[KEYS.VK_D] = 68;
-    this.keyMap[KEYS.VK_S] = 83;
-    this.keyMap[KEYS.VK_A] = 65;
-    this.keyMap[KEYS.VK_UP] = 38;
-    this.keyMap[KEYS.VK_RIGHT] = 39;
-    this.keyMap[KEYS.VK_DOWN] = 40;
-    this.keyMap[KEYS.VK_LEFT] = 41;
+    this.keyMap[KEYS.VK_W] = 0;
+    this.keyMap[KEYS.VK_D] = 1;
+    this.keyMap[KEYS.VK_S] = 2;
+    this.keyMap[KEYS.VK_A] = 3;
+    this.keyMap[KEYS.VK_UP] = 0;
+    this.keyMap[KEYS.VK_RIGHT] = 1;
+    this.keyMap[KEYS.VK_DOWN] = 2;
+    this.keyMap[KEYS.VK_LEFT] = 3;
   }
 
   private addInputListener() {
-    window.addEventListener("keyup", e => {
+    window.addEventListener("keyup", (e: KeyboardEvent) => {
       var code = e.keyCode;
 
       if (code in this.keyMap) {
-        console.log("Key code is " + code);
+        let direction = DIRS[4][this.keyMap[code]];
+        let newPosition = new Position(
+          this.currentPosition.x + direction[0],
+          this.currentPosition.y + direction[1]
+        );
+        if (this.game.possitionIsPassable(newPosition)) {
+          this.currentPosition = newPosition;
+        }
+        this.game.updateMap();
       }
     });
   }

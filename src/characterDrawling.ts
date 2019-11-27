@@ -1,6 +1,6 @@
 export class CharacterDrawling {
   constructor(
-    public character: string,
+    public symbol: string,
     public foregroundColor?: string,
     public backgroundColor?: string
   ) {}

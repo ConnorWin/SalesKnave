@@ -1,5 +1,7 @@
 import { Display, Map } from "rot-js/lib/index";
 import { Player } from "./player";
+import { Position } from "./postition";
+import { CharacterDrawling } from "./characterDrawling";
 
 export class Game {
   private display: Display;
@@ -8,7 +10,6 @@ export class Game {
   private player: Player;
 
   constructor() {
-    this.player = new Player();
     this.gameSize = { width: 75, height: 25 };
 
     this.display = new Display({
@@ -18,12 +19,17 @@ export class Game {
     });
     document.body.appendChild(this.display.getContainer());
     this._generateMap();
-
-    this.mainEventLoop();
+    this.player = new Player(
+      this,
+      this.keyToPosition(Object.keys(this.map)[0])
+    );
+    this.drawCharacter(this.player.currentPosition, this.player.drawling);
   }
 
-  private async mainEventLoop() {
-    while (true) {}
+  public updateMap() {
+    this.display.clear();
+    this._drawWholeMap();
+    this.drawCharacter(this.player.currentPosition, this.player.drawling);
   }
 
   private _generateMap() {
@@ -65,8 +71,28 @@ export class Game {
     }
   }
 
+  private drawCharacter(
+    position: Position,
+    characterDrawling: CharacterDrawling
+  ) {
+    this.display.draw(
+      position.x,
+      position.y,
+      characterDrawling.symbol,
+      characterDrawling.foregroundColor,
+      characterDrawling.backgroundColor
+    );
+  }
+
   private key(x: number, y: number) {
     return `${x},${y}`;
+  }
+  private keyToPosition(key: string) {
+    const splitKey = key.split(",");
+    return new Position(
+      Number.parseInt(splitKey[0]),
+      Number.parseInt(splitKey[1])
+    );
   }
 
   private fromKey(key: string): [number, number] {
@@ -75,5 +101,9 @@ export class Game {
     const y = parseInt(parts[1]);
 
     return [x, y];
+  }
+
+  possitionIsPassable(position: Position): boolean {
+    return this.key(position.x, position.y) in this.map;
   }
 }
