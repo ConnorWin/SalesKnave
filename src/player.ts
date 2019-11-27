@@ -2,12 +2,14 @@ import { KEYS, DIRS } from "rot-js";
 import { CharacterDrawling } from "./characterDrawling";
 import { Position } from "./postition";
 import { Game } from "./game";
+import { EventEmitter } from "events";
 
 export class Player {
   private keyMap: { [key: number]: number };
 
   public drawling: CharacterDrawling;
   public currentPosition: Position;
+  public keyPressed: EventEmitter = new EventEmitter();
 
   constructor(public game: Game, position: Position) {
     this.drawling = new CharacterDrawling("@", "#ff0", "#0000");
@@ -41,7 +43,7 @@ export class Player {
         if (this.game.possitionIsPassable(newPosition)) {
           this.currentPosition = newPosition;
         }
-        this.game.updateMap();
+        this.keyPressed.emit("position changed");
       }
     });
   }

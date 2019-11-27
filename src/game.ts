@@ -24,9 +24,12 @@ export class Game {
       this.keyToPosition(Object.keys(this.map)[0])
     );
     this.drawCharacter(this.player.currentPosition, this.player.drawling);
+    this.player.keyPressed.on("position changed", () => {
+      this.updateMap();
+    });
   }
 
-  public updateMap() {
+  private updateMap() {
     this.display.clear();
     this._drawWholeMap();
     this.drawCharacter(this.player.currentPosition, this.player.drawling);
