@@ -1,6 +1,6 @@
 import { KEYS, DIRS } from "rot-js";
 import { CharacterDrawling } from "./characterDrawling";
-import { Position } from "./postition";
+import { Position } from "./position";
 import { Game } from "./game";
 import { EventEmitter } from "events";
 
@@ -9,11 +9,13 @@ export class Player {
 
   public drawling: CharacterDrawling;
   public currentPosition: Position;
+  public previousPosition: Position;
   public keyPressed: EventEmitter = new EventEmitter();
 
   constructor(public game: Game, position: Position) {
     this.drawling = new CharacterDrawling("@", "#ff0", "#0000");
     this.currentPosition = position;
+    this.previousPosition = position;
     this.initializeKeyMap();
     this.addInputListener();
   }
@@ -40,7 +42,8 @@ export class Player {
           this.currentPosition.x + direction[0],
           this.currentPosition.y + direction[1]
         );
-        if (this.game.possitionIsPassable(newPosition)) {
+        if (this.game.positionIsPassable(newPosition)) {
+          this.previousPosition = { ...this.currentPosition };
           this.currentPosition = newPosition;
         }
         this.keyPressed.emit("position changed");
