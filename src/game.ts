@@ -3,6 +3,7 @@ import { Player } from "./player";
 import { Position } from "./position";
 import { CharacterDrawling } from "./characterDrawling";
 import { TextGenerator } from "./text-generator";
+import { Room } from "rot-js/lib/map/features";
 
 export class Game {
   private display: Display;
@@ -12,6 +13,7 @@ export class Game {
   private gameSize = { width: 75, height: 25 };
   private currentRoomName = this.generator.getNextRoomName();
   private doors: Position[] = [];
+  private rooms: Room[] = [];
 
   constructor() {
     this.display = new Display({
@@ -56,9 +58,10 @@ export class Game {
       freeCells.push(key);
     });
 
-    digger
-      .getRooms()
-      .forEach(r => r.getDoors((x, y) => this.doors.push({ x, y })));
+    digger.getRooms().forEach(r => {
+      this.rooms.push(r);
+      r.getDoors((x, y) => this.doors.push({ x, y }));
+    });
   }
 
   private _drawWholeMap() {
@@ -92,7 +95,6 @@ export class Game {
     );
   }
 
-  private inHallway = false;
   private roomTracker = {};
   private drawRoomName() {
     if (this.isDoor(this.player.currentPosition)) {
@@ -100,18 +102,17 @@ export class Game {
         this.keyFrom(this.player.previousPosition)
       ] = this.currentRoomName;
       this.currentRoomName = this.generator.getNextRoomName();
-      this.inHallway = false;
       return;
     }
-    if (this.inHallway || this.isHallway(this.player.currentPosition)) {
-      this.inHallway = true;
+    if (!this.inRoom(this.player.currentPosition)) {
       return;
     }
 
-    if (this.roomTracker[this.keyFrom(this.player.currentPosition)]) {
-      this.currentRoomName = this.roomTracker[
-        this.keyFrom(this.player.currentPosition)
-      ];
+    const previousAssignedRoomName = this.roomTracker[
+      this.keyFrom(this.player.currentPosition)
+    ];
+    if (previousAssignedRoomName) {
+      this.currentRoomName = previousAssignedRoomName;
     }
 
     let name = this.currentRoomName;
@@ -127,15 +128,15 @@ export class Game {
     );
   }
 
-  private isHallway({ x, y }: Position) {
-    let neighbors = 0;
-    for (let dx = x - 1; dx <= x + 1; dx++) {
-      for (let dy = y - 1; dy <= y + 1; dy++) {
-        neighbors += this.map[this.key(dx, dy)] === "." ? 1 : 0;
-      }
-    }
-
-    return neighbors <= 3;
+  private inRoom({ x, y }: Position) {
+    return this.rooms.some(r => {
+      return (
+        r.getLeft() <= x &&
+        x <= r.getRight() &&
+        r.getTop() <= y &&
+        y <= r.getBottom()
+      );
+    });
   }
 
   private isDoor({ x, y }: Position) {
