@@ -1,17 +1,21 @@
 import { KEYS, DIRS } from "rot-js";
 import { CharacterDrawling } from "./characterDrawling";
-import { Position } from "./postition";
+import { Position } from "./position";
 import { Game } from "./game";
 import { EventEmitter } from "events";
 import { Character } from "./character";
+import { isRegExp } from "util";
 export class Player extends Character {
   private keyMap: { [key: number]: number };
-  private game: Game;
+  public drawling: CharacterDrawling;
+  public currentPosition: Position;
+  public previousPosition: Position;
   public keyPressed: EventEmitter = new EventEmitter();
 
-  constructor(game: Game, position: Position) {
+  constructor(public game: Game, position: Position) {
     super(new CharacterDrawling("@", "#ff0", "#0000"), position);
-    this.game = game;
+    this.currentPosition = position;
+    this.previousPosition = position;
     this.initializeKeyMap();
     this.addInputListener();
   }
@@ -38,10 +42,15 @@ export class Player extends Character {
           this.currentPosition.x + direction[0],
           this.currentPosition.y + direction[1]
         );
-        if (this.game.possitionIsPassable(newPosition)) {
-          this.currentPosition = newPosition;
+        if (this.game.positionIsPassable(newPosition)) {
+          if (this.game.bossIsInPosition(newPosition.x, newPosition.y)) {
+            this.keyPressed.emit("boss fight");
+          } else {
+            this.previousPosition = { ...this.currentPosition };
+            this.currentPosition = newPosition;
+            this.keyPressed.emit("position changed");
+          }
         }
-        this.keyPressed.emit("position changed");
       }
     });
   }

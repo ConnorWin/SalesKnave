@@ -1,5 +1,5 @@
 import { CharacterDrawling } from "./characterDrawling";
-import { Position } from "./postition";
+import { Position } from "./position";
 export class Character {
   constructor(
     public characterDrawling: CharacterDrawling,

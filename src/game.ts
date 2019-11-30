@@ -1,20 +1,26 @@
 import { Display, Map } from "rot-js/lib/index";
 import { Player } from "./player";
-import { Position } from "./postition";
+import { Position } from "./position";
 import { CharacterDrawling } from "./characterDrawling";
 import { Character } from "./character";
 import { Boss } from "./boss";
+import { TextGenerator } from "./text-generator";
+import { Room } from "rot-js/lib/map/features";
+import { BossFight } from "./bossFight";
 
 export class Game {
   private display: Display;
-  private gameSize: { width: number; height: number };
   private map: { [key: string]: string | string[] } = {};
   private player: Player;
   private characters: Character[] = [];
+  private generator = new TextGenerator();
+  private gameSize = { width: 75, height: 25 };
+  private currentRoomName = this.generator.getNextRoomName();
+  private doors: Position[] = [];
+  private rooms: Room[] = [];
+  private currentLevelBoss: Boss;
 
   constructor() {
-    this.gameSize = { width: 75, height: 25 };
-
     this.display = new Display({
       width: this.gameSize.width,
       height: this.gameSize.height,
@@ -28,12 +34,24 @@ export class Game {
     );
     this.characters.push(this.player);
     this.characters.push(
-      new Boss(this.keyToPosition(Object.keys(this.map)[20]))
+      (this.currentLevelBoss = new Boss(
+        this.keyToPosition(Object.keys(this.map)[20])
+      ))
     );
     this.updateMap();
     this.player.keyPressed.on("position changed", () => {
       this.updateMap();
     });
+    this.player.keyPressed.on("boss fight", () => {
+      console.log("boss");
+      let actionbar = "";
+      for (let i = 0; i < this.gameSize.width; i++) {
+        actionbar += "=";
+      }
+      this.display.clear();
+      this.display.drawText(0, this.gameSize.height - 2, actionbar);
+    });
+    this.updateMap();
   }
 
   private updateMap() {
@@ -45,12 +63,13 @@ export class Game {
         character.characterDrawling
       );
     });
+    this.drawRoomName();
   }
 
   private _generateMap() {
     const digger = new Map.Uniform(
       this.gameSize.width,
-      this.gameSize.height,
+      this.gameSize.height - 3,
       {}
     );
     const freeCells = [];
@@ -65,7 +84,10 @@ export class Game {
       freeCells.push(key);
     });
 
-    this._drawWholeMap();
+    digger.getRooms().forEach(r => {
+      this.rooms.push(r);
+      r.getDoors((x, y) => this.doors.push({ x, y }));
+    });
   }
 
   private _drawWholeMap() {
@@ -99,9 +121,62 @@ export class Game {
     );
   }
 
+  private roomTracker = {};
+  private drawRoomName() {
+    if (this.isDoor(this.player.currentPosition)) {
+      this.roomTracker[
+        this.keyFrom(this.player.previousPosition)
+      ] = this.currentRoomName;
+      this.currentRoomName = this.generator.getNextRoomName();
+      return;
+    }
+    if (!this.inRoom(this.player.currentPosition)) {
+      return;
+    }
+
+    const previousAssignedRoomName = this.roomTracker[
+      this.keyFrom(this.player.currentPosition)
+    ];
+    if (previousAssignedRoomName) {
+      this.currentRoomName = previousAssignedRoomName;
+    }
+
+    let name = this.currentRoomName;
+
+    if (this.isDoor(this.player.previousPosition)) {
+      name = "You've entered The " + name;
+    }
+
+    this.display.drawText(
+      (this.gameSize.width - name.length) / 2,
+      this.gameSize.height - 2,
+      name
+    );
+  }
+
+  private inRoom({ x, y }: Position) {
+    return this.rooms.some(r => {
+      return (
+        r.getLeft() <= x &&
+        x <= r.getRight() &&
+        r.getTop() <= y &&
+        y <= r.getBottom()
+      );
+    });
+  }
+
+  private isDoor({ x, y }: Position) {
+    return this.doors.some(({ x: vx, y: vy }) => vx === x && vy === y);
+  }
+
+  private keyFrom(pos: Position) {
+    return this.key(pos.x, pos.y);
+  }
+
   private key(x: number, y: number) {
     return `${x},${y}`;
   }
+
   private keyToPosition(key: string) {
     const splitKey = key.split(",");
     return new Position(
@@ -118,7 +193,14 @@ export class Game {
     return [x, y];
   }
 
-  possitionIsPassable(position: Position): boolean {
+  positionIsPassable(position: Position): boolean {
     return this.key(position.x, position.y) in this.map;
+  }
+
+  bossIsInPosition(x: number, y: number): boolean {
+    return (
+      x === this.currentLevelBoss.currentPosition.x &&
+      y === this.currentLevelBoss.currentPosition.y
+    );
   }
 }
