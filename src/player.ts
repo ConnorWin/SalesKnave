@@ -43,7 +43,7 @@ export class Player {
           this.currentPosition.y + direction[1]
         );
         if (this.game.positionIsPassable(newPosition)) {
-          this.previousPosition = { ...this.currentPosition };
+          this.previousPosition = this.currentPosition.clone();
           this.currentPosition = newPosition;
         }
         this.keyPressed.emit("position changed");

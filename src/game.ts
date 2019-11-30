@@ -4,24 +4,29 @@ import { Position } from "./position";
 import { CharacterDrawling } from "./characterDrawling";
 import { TextGenerator } from "./text-generator";
 import { Room } from "rot-js/lib/map/features";
+import Log from "./log";
+
+const FONT_BASE = 20;
 
 export class Game {
   private display: Display;
   private map: { [key: string]: string | string[] } = {};
   private player: Player;
   private generator = new TextGenerator();
-  private gameSize = { width: 75, height: 25 };
   private currentRoomName = this.generator.getNextRoomName();
   private doors: Position[] = [];
   private rooms: Room[] = [];
+  private options = {
+    width: 225,
+    height: 75,
+    spacing: 1.1,
+    fontSize: FONT_BASE,
+    fontFamily: "metrickal, monospace"
+  };
 
-  constructor() {
-    this.display = new Display({
-      width: this.gameSize.width,
-      height: this.gameSize.height,
-      fontSize: 20
-    });
-    document.body.appendChild(this.display.getContainer());
+  constructor(parent: Element, private log: Log) {
+    this.display = new Display(this.options);
+    parent.appendChild(this.display.getContainer());
     this._generateMap();
     this.player = new Player(
       this,
@@ -31,21 +36,79 @@ export class Game {
       this.updateMap();
     });
     this.updateMap();
+    this.fit();
+
+    parent.classList.remove("hidden");
   }
 
   private updateMap() {
     this.display.clear();
-    this._drawWholeMap();
-    this.drawCharacter(this.player.currentPosition, this.player.drawling);
     this.drawRoomName();
+    this.centerOn(this.player.currentPosition);
+    this.drawCharacter(this.player.currentPosition, this.player.drawling);
+  }
+
+  private centerOn(newCenter: Position) {
+    let center = newCenter.clone();
+
+    let displayXY = new Position(undefined, undefined);
+    for (displayXY.x = 0; displayXY.x < this.options.width; displayXY.x++) {
+      for (displayXY.y = 0; displayXY.y < this.options.height; displayXY.y++) {
+        this.update(center, this.displayToLevel(center, displayXY));
+      }
+    }
+  }
+
+  displayToLevel(center: Position, xy: Position) {
+    // display XY to level XY; middle point = center
+    let half = new Position(this.options.width, this.options.height)
+      .scale(0.5)
+      .floor();
+    return xy.minus(half).plus(center);
+  }
+
+  update(center: Position, levelXY: Position) {
+    let displayXY = this.levelToDisplay(center, levelXY);
+    this.display.draw(
+      displayXY.x,
+      displayXY.y,
+      this.map[this.keyFrom(displayXY)],
+      undefined,
+      undefined
+    );
+  }
+
+  levelToDisplay(center: Position, xy: Position) {
+    // level XY to display XY; center = middle point
+    let half = new Position(this.options.width, this.options.height)
+      .scale(0.5)
+      .floor();
+    return xy.minus(center).plus(half);
+  }
+
+  private fit() {
+    let node = this.display.getContainer();
+    let parent = node.parentNode as HTMLElement;
+    let avail = new Position(parent.offsetWidth, parent.offsetHeight);
+
+    let size = this.display.computeSize(avail.x, avail.y);
+    size[0] += size[0] % 2 ? 2 : 1;
+    size[1] += size[1] % 2 ? 2 : 1;
+    this.options = {
+      ...this.options,
+      width: size[0],
+      height: size[1]
+    };
+    this.display.setOptions(this.options);
+
+    let current = new Position(node.offsetWidth, node.offsetHeight);
+    let offset = avail.minus(current).scale(0.5);
+    node.style.left = `${offset.x}px`;
+    node.style.top = `${offset.y}px`;
   }
 
   private _generateMap() {
-    const digger = new Map.Uniform(
-      this.gameSize.width,
-      this.gameSize.height - 3,
-      {}
-    );
+    const digger = new Map.Uniform(this.options.width, this.options.height, {});
     const freeCells = [];
 
     digger.create((x, y, value) => {
@@ -56,20 +119,13 @@ export class Game {
       const key = this.key(x, y);
       this.map[key] = ".";
       freeCells.push(key);
+      this.drawWalls(x, y);
     });
 
     digger.getRooms().forEach(r => {
       this.rooms.push(r);
-      r.getDoors((x, y) => this.doors.push({ x, y }));
+      r.getDoors((x, y) => this.doors.push(new Position(x, y)));
     });
-  }
-
-  private _drawWholeMap() {
-    for (var key in this.map) {
-      const [x, y] = this.fromKey(key);
-      this.display.draw(x, y, this.map[key], undefined, undefined);
-      this.drawWalls(x, y);
-    }
   }
 
   private drawWalls(x: number, y: number) {
@@ -77,6 +133,7 @@ export class Game {
       for (let dy = y - 1; dy <= y + 1; dy++) {
         if (!this.map[this.key(dx, dy)]) {
           this.display.draw(dx, dy, "#", undefined, undefined);
+          this.map[this.key(dx, dy)] = "#";
         }
       }
     }
@@ -119,13 +176,14 @@ export class Game {
 
     if (this.isDoor(this.player.previousPosition)) {
       name = "You've entered The " + name;
+      this.log.add(name);
     }
 
-    this.display.drawText(
-      (this.gameSize.width - name.length) / 2,
-      this.gameSize.height - 2,
-      name
-    );
+    // this.display.drawText(
+    //   (this.gameSize.width - name.length) / 2,
+    //   this.gameSize.height - 2,
+    //   name
+    // );
   }
 
   private inRoom({ x, y }: Position) {
@@ -168,6 +226,7 @@ export class Game {
   }
 
   positionIsPassable(position: Position): boolean {
-    return this.key(position.x, position.y) in this.map;
+    const key = this.key(position.x, position.y);
+    return key in this.map && this.map[key] != "#";
   }
 }
