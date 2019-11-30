@@ -5,20 +5,21 @@ import { CharacterDrawling } from "./characterDrawling";
 import { TextGenerator } from "./text-generator";
 import { Room } from "rot-js/lib/map/features";
 import Log from "./log";
+import { Wall, Floor } from "./elements";
 
 const FONT_BASE = 20;
 
 export class Game {
   private display: Display;
-  private map: { [key: string]: string | string[] } = {};
+  private map: { [key: string]: CharacterDrawling } = {};
   private player: Player;
   private generator = new TextGenerator();
   private currentRoomName = this.generator.getNextRoomName();
   private doors: Position[] = [];
   private rooms: Room[] = [];
   private options = {
-    width: 225,
-    height: 75,
+    width: 300,
+    height: 300,
     spacing: 1.1,
     fontSize: FONT_BASE,
     fontFamily: "metrickal, monospace"
@@ -28,10 +29,8 @@ export class Game {
     this.display = new Display(this.options);
     parent.appendChild(this.display.getContainer());
     this._generateMap();
-    this.player = new Player(
-      this,
-      this.keyToPosition(Object.keys(this.map)[0])
-    );
+    const [x, y] = this.rooms[0].getCenter();
+    this.player = new Player(this, new Position(x, y));
     this.player.keyPressed.on("position changed", () => {
       this.updateMap();
     });
@@ -44,46 +43,56 @@ export class Game {
   private updateMap() {
     this.display.clear();
     this.drawRoomName();
+    let playerKey = this.keyFrom(this.player.currentPosition);
+    const currentCell = { ...this.map[playerKey] };
+    this.map[playerKey] = this.player;
+    this.fit();
     this.centerOn(this.player.currentPosition);
-    this.drawCharacter(this.player.currentPosition, this.player.drawling);
+    this.map[playerKey] = currentCell;
   }
 
-  private centerOn(newCenter: Position) {
-    let center = newCenter.clone();
+  private update(levelXY: Position) {
+    let visual = this.map[this.keyFrom(levelXY)];
+    if (!visual) {
+      return;
+    }
+    let displayXY = this.levelToDisplay(levelXY);
+    this.display.draw(
+      displayXY.x,
+      displayXY.y,
+      visual.symbol,
+      visual.fg,
+      visual.bg
+    );
+  }
 
-    let displayXY = new Position(undefined, undefined);
+  private center: Position;
+  private centerOn(newCenter: Position) {
+    this.center = newCenter.clone();
+    this.display.clear();
+
+    let displayXY = new Position(0, 0);
     for (displayXY.x = 0; displayXY.x < this.options.width; displayXY.x++) {
       for (displayXY.y = 0; displayXY.y < this.options.height; displayXY.y++) {
-        this.update(center, this.displayToLevel(center, displayXY));
+        this.update(this.displayToLevel(displayXY));
       }
     }
   }
 
-  displayToLevel(center: Position, xy: Position) {
-    // display XY to level XY; middle point = center
-    let half = new Position(this.options.width, this.options.height)
-      .scale(0.5)
-      .floor();
-    return xy.minus(half).plus(center);
-  }
-
-  update(center: Position, levelXY: Position) {
-    let displayXY = this.levelToDisplay(center, levelXY);
-    this.display.draw(
-      displayXY.x,
-      displayXY.y,
-      this.map[this.keyFrom(displayXY)],
-      undefined,
-      undefined
-    );
-  }
-
-  levelToDisplay(center: Position, xy: Position) {
+  private levelToDisplay(xy: Position) {
     // level XY to display XY; center = middle point
     let half = new Position(this.options.width, this.options.height)
       .scale(0.5)
       .floor();
-    return xy.minus(center).plus(half);
+    return xy.minus(this.center).plus(half);
+  }
+
+  private displayToLevel(xy: Position) {
+    // display XY to level XY; middle point = center
+    let half = new Position(this.options.width, this.options.height)
+      .scale(0.5)
+      .floor();
+    return xy.minus(half).plus(this.center);
   }
 
   private fit() {
@@ -117,7 +126,7 @@ export class Game {
       }
 
       const key = this.key(x, y);
-      this.map[key] = ".";
+      this.map[key] = new Floor();
       freeCells.push(key);
       this.drawWalls(x, y);
     });
@@ -132,8 +141,7 @@ export class Game {
     for (let dx = x - 1; dx <= x + 1; dx++) {
       for (let dy = y - 1; dy <= y + 1; dy++) {
         if (!this.map[this.key(dx, dy)]) {
-          this.display.draw(dx, dy, "#", undefined, undefined);
-          this.map[this.key(dx, dy)] = "#";
+          this.map[this.key(dx, dy)] = new Wall();
         }
       }
     }
@@ -147,8 +155,8 @@ export class Game {
       position.x,
       position.y,
       characterDrawling.symbol,
-      characterDrawling.foregroundColor,
-      characterDrawling.backgroundColor
+      characterDrawling.fg,
+      characterDrawling.bg
     );
   }
 
@@ -217,16 +225,8 @@ export class Game {
     );
   }
 
-  private fromKey(key: string): [number, number] {
-    const parts = key.split(",");
-    const x = parseInt(parts[0]);
-    const y = parseInt(parts[1]);
-
-    return [x, y];
-  }
-
   positionIsPassable(position: Position): boolean {
     const key = this.key(position.x, position.y);
-    return key in this.map && this.map[key] != "#";
+    return key in this.map && !(this.map[key] instanceof Wall);
   }
 }

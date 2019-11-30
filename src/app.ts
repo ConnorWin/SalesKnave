@@ -7,18 +7,14 @@ function init() {
 
   // status.update();
 
-  log.add("A truly beautiful day for a heroic action!");
+  log.add("Welcome to the {aqua}Leaps and Bounds Trampoline Company{}!");
   log.add(
-    "This tower is surrounded by plains and trees and there might be a princess sleeping on the last floor."
+    "You must traverse the day to day tedium of everyday life to become the {gold}CEO{}."
   );
   log.pause();
-  log.add(
-    "Apparently the only way to get to her is to advance through all tower levels."
-  );
-  log.add(
-    "To move around, use {#fff}arrow keys{}, {#fff}numpad{} or {#fff}vim-keys{}."
-  );
-  // log.pause();
+  log.add("Make sales and fend off your annoying coworkers or die of boredom.");
+  log.add("To move around, use the {#fff}arrow keys{}.");
+  log.pause();
 
   // let level = generate(1);
   // level.activate(level.start, pc);
