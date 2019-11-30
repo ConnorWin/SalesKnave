@@ -1,9 +1,11 @@
 import { Game } from "./game";
 import Log from "./log";
+import { Level } from "./level";
 
 function init() {
+  const level = new Level(1);
   const log = new Log(document.querySelector("#log"));
-  const map = new Game(document.querySelector("#map"), log);
+  const game = new Game(document.querySelector("#map"), log, level);
 
   // status.update();
 
@@ -16,7 +18,6 @@ function init() {
   log.add("To move around, use the {#fff}arrow keys{}.");
   log.pause();
 
-  // let level = generate(1);
   // level.activate(level.start, pc);
 
   // actors.loop();

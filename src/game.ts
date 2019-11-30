@@ -5,32 +5,33 @@ import { CharacterDrawling } from "./characterDrawling";
 import { TextGenerator } from "./text-generator";
 import { Room } from "rot-js/lib/map/features";
 import Log from "./log";
-import { Wall, Floor } from "./elements";
+import { Wall, Floor, Door, Boss } from "./elements";
+import { Level } from "./level";
 
-const FONT_BASE = 20;
+const FONT_BASE = 25;
 
 export class Game {
   private display: Display;
-  private map: { [key: string]: CharacterDrawling } = {};
   private player: Player;
   private generator = new TextGenerator();
   private currentRoomName = this.generator.getNextRoomName();
-  private doors: Position[] = [];
-  private rooms: Room[] = [];
   private options = {
     width: 300,
     height: 300,
     spacing: 1.1,
-    fontSize: FONT_BASE,
-    fontFamily: "metrickal, monospace"
+    fontSize: FONT_BASE
   };
 
-  constructor(parent: Element, private log: Log) {
+  constructor(parent: Element, private log: Log, private level: Level) {
     this.display = new Display(this.options);
     parent.appendChild(this.display.getContainer());
-    this._generateMap();
-    const [x, y] = this.rooms[0].getCenter();
-    this.player = new Player(this, new Position(x, y));
+
+    if (Object.keys(this.level.map).length === 0) {
+      this.level = new Level(this.level.levelNum);
+    }
+
+    this.player = new Player(this, level.start);
+    this.level.map[this.keyFrom(level.end)] = new Boss();
     this.player.keyPressed.on("position changed", () => {
       this.updateMap();
     });
@@ -43,16 +44,14 @@ export class Game {
   private updateMap() {
     this.display.clear();
     this.drawRoomName();
-    let playerKey = this.keyFrom(this.player.currentPosition);
-    const currentCell = { ...this.map[playerKey] };
-    this.map[playerKey] = this.player;
+    this.level.moveTo(this.player.currentPosition, this.player);
     this.fit();
     this.centerOn(this.player.currentPosition);
-    this.map[playerKey] = currentCell;
+    this.level.restore();
   }
 
   private update(levelXY: Position) {
-    let visual = this.map[this.keyFrom(levelXY)];
+    let visual = this.level.map[this.keyFrom(levelXY)];
     if (!visual) {
       return;
     }
@@ -69,7 +68,6 @@ export class Game {
   private center: Position;
   private centerOn(newCenter: Position) {
     this.center = newCenter.clone();
-    this.display.clear();
 
     let displayXY = new Position(0, 0);
     for (displayXY.x = 0; displayXY.x < this.options.width; displayXY.x++) {
@@ -116,60 +114,16 @@ export class Game {
     node.style.top = `${offset.y}px`;
   }
 
-  private _generateMap() {
-    const digger = new Map.Uniform(this.options.width, this.options.height, {});
-    const freeCells = [];
-
-    digger.create((x, y, value) => {
-      if (value) {
-        return;
-      }
-
-      const key = this.key(x, y);
-      this.map[key] = new Floor();
-      freeCells.push(key);
-      this.drawWalls(x, y);
-    });
-
-    digger.getRooms().forEach(r => {
-      this.rooms.push(r);
-      r.getDoors((x, y) => this.doors.push(new Position(x, y)));
-    });
-  }
-
-  private drawWalls(x: number, y: number) {
-    for (let dx = x - 1; dx <= x + 1; dx++) {
-      for (let dy = y - 1; dy <= y + 1; dy++) {
-        if (!this.map[this.key(dx, dy)]) {
-          this.map[this.key(dx, dy)] = new Wall();
-        }
-      }
-    }
-  }
-
-  private drawCharacter(
-    position: Position,
-    characterDrawling: CharacterDrawling
-  ) {
-    this.display.draw(
-      position.x,
-      position.y,
-      characterDrawling.symbol,
-      characterDrawling.fg,
-      characterDrawling.bg
-    );
-  }
-
   private roomTracker = {};
   private drawRoomName() {
-    if (this.isDoor(this.player.currentPosition)) {
+    if (this.level.isDoor(this.player.currentPosition)) {
       this.roomTracker[
         this.keyFrom(this.player.previousPosition)
       ] = this.currentRoomName;
       this.currentRoomName = this.generator.getNextRoomName();
       return;
     }
-    if (!this.inRoom(this.player.currentPosition)) {
+    if (!this.level.inRoom(this.player.currentPosition)) {
       return;
     }
 
@@ -182,31 +136,10 @@ export class Game {
 
     let name = this.currentRoomName;
 
-    if (this.isDoor(this.player.previousPosition)) {
+    if (this.level.isDoor(this.player.previousPosition)) {
       name = "You've entered The " + name;
       this.log.add(name);
     }
-
-    // this.display.drawText(
-    //   (this.gameSize.width - name.length) / 2,
-    //   this.gameSize.height - 2,
-    //   name
-    // );
-  }
-
-  private inRoom({ x, y }: Position) {
-    return this.rooms.some(r => {
-      return (
-        r.getLeft() <= x &&
-        x <= r.getRight() &&
-        r.getTop() <= y &&
-        y <= r.getBottom()
-      );
-    });
-  }
-
-  private isDoor({ x, y }: Position) {
-    return this.doors.some(({ x: vx, y: vy }) => vx === x && vy === y);
   }
 
   private keyFrom(pos: Position) {
@@ -217,16 +150,8 @@ export class Game {
     return `${x},${y}`;
   }
 
-  private keyToPosition(key: string) {
-    const splitKey = key.split(",");
-    return new Position(
-      Number.parseInt(splitKey[0]),
-      Number.parseInt(splitKey[1])
-    );
-  }
-
-  positionIsPassable(position: Position): boolean {
+  public positionIsPassable(position: Position): boolean {
     const key = this.key(position.x, position.y);
-    return key in this.map && !(this.map[key] instanceof Wall);
+    return key in this.level.map && !(this.level.map[key] instanceof Wall);
   }
 }

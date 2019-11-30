@@ -8,6 +8,18 @@ export class Wall extends CharacterDrawling {
 
 export class Floor extends CharacterDrawling {
   constructor() {
-    super(".", "#999");
+    super(".", "#aaa");
+  }
+}
+
+export class Door extends CharacterDrawling {
+  constructor() {
+    super("+", "chocolate");
+  }
+}
+
+export class Boss extends CharacterDrawling {
+  constructor() {
+    super("B", "orange");
   }
 }
