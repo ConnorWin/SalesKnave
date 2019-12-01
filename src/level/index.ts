@@ -2,7 +2,15 @@ import { CharacterDrawling } from "../characterDrawling";
 import { Room } from "rot-js/lib/map/features";
 import { Map, RNG, Path } from "rot-js";
 import { Position } from "../position";
-import { Floor, Wall, Door } from "../elements";
+import {
+  Floor,
+  Wall,
+  Door,
+  Potion,
+  Manager,
+  CoWorker,
+  Engineer
+} from "../elements";
 
 type LevelMap = { [key: string]: CharacterDrawling };
 export class Level {
@@ -11,6 +19,8 @@ export class Level {
   public rooms: Room[] = [];
   public start: Position;
   public end: Position;
+  public startRoom: Room;
+  public endRoom: Room;
 
   constructor(public levelNum: number) {
     const averageSize = levelNum * 50 + 100;
@@ -20,19 +30,19 @@ export class Level {
     this.map = map.map;
     this.doors = map.doors;
     this.rooms = map.rooms;
-    let firstRoom = this.rooms[0];
-    this.start = this.toPosition(firstRoom);
-    this.end = this.toPosition(
-      this.rooms.reduce(
-        (furthest, room) => {
-          const dist = this.distance(firstRoom, room);
+    this.startRoom = this.rooms[0];
+    this.start = this.toPosition(this.startRoom);
+    this.endRoom = this.rooms.reduce(
+      (furthest, room) => {
+        const dist = this.distance(this.startRoom, room);
 
-          if (dist > furthest.dist) return { room, dist };
-          return furthest;
-        },
-        { room: undefined as Room, dist: 0 }
-      ).room
-    );
+        if (dist > furthest.dist) return { room, dist };
+        return furthest;
+      },
+      { room: undefined as Room, dist: 0 }
+    ).room;
+    this.end = this.toPosition(this.endRoom);
+    this.generateFeatures();
   }
 
   private generateMap(width, height) {
@@ -130,5 +140,38 @@ export class Level {
     a.compute(x1, y1, () => dist++);
 
     return dist;
+  }
+
+  private generateFeatures() {
+    let features = {
+      item: 6,
+      potion: 4,
+      enemy: 4,
+      empty: 1
+    };
+
+    const rooms = this.rooms.filter(
+      r => r !== this.startRoom && r !== this.endRoom
+    );
+
+    rooms.forEach(room => {
+      const feature = RNG.getWeightedValue(features);
+      const x = RNG.getUniformInt(room.getLeft(), room.getRight());
+      const y = RNG.getUniformInt(room.getTop(), room.getBottom());
+      switch (feature) {
+        case "potion":
+          this.map[this.key(x, y)] = new Potion();
+        case "enemy":
+          this.map[this.key(x, y)] = RNG.getItem([
+            new Manager(),
+            new CoWorker(),
+            new Engineer()
+          ]);
+        case "item":
+        case "empty":
+        default:
+          return;
+      }
+    });
   }
 }
