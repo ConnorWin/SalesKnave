@@ -24,7 +24,7 @@ export const feelingPitches = [
   "Our customers say they safest bouncing on one of our trampolines."
 ];
 
-export const agressionPitches = [
+export const aggressionPitches = [
   "What? You're too good for our trampolines?",
   "All our competitors are complete garbage compared to us.",
   "This reduced price that I’m offering you today is only available until the end of the week.",
