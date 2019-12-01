@@ -207,16 +207,33 @@ export class Game {
         this.updateMap(false);
       });
       this.player.keyPressed.on("boss fight", () => {
-        this.currentBossFight = new BossFight(1);
+        this.currentBossFight = new BossFight(1, this.player.hp);
+        this.player.isInBossFight = true;
         this.display.clear();
+        this.level.actors.clear();
         this.currentBossFight.drawDisplay(
           this.display,
           this.options.width,
           this.options.height
         );
       });
-      this.player.keyPressed.on("fight action", () => {
+      this.player.keyPressed.on("fight action", (actionNumber: number) => {
         if (this.currentBossFight != null) {
+          this.currentBossFight.processFightAction(actionNumber);
+          if (this.currentBossFight.playerHealth <= 0) {
+            this.level.actors.clear();
+            this.log.pause();
+            this.log.add("You have {red}died{}. Better luck next time");
+          } else if (this.currentBossFight.boss.currentHealth <= 0) {
+          } else {
+            this.display.clear();
+            this.currentBossFight.setFightActions();
+            this.currentBossFight.drawDisplay(
+              this.display,
+              this.options.width,
+              this.options.height
+            );
+          }
         }
       });
     }

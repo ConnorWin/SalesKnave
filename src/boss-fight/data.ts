@@ -1,4 +1,4 @@
-export const logicalPitches = [
+export const LogicalPitches = [
   "The highest trampoline bounce ever recorded launched a man 22 feet in the air. We can get you to 23.",
   "Trampolines are much safer to jump on than cars or couches.",
   "Statistically, trampolines are safer than most people think.",
@@ -11,7 +11,7 @@ export const logicalPitches = [
   "Professional trampolinists never bounce barefoot. Thats why I'll throw in our protective footwear for every model you buy."
 ];
 
-export const feelingPitches = [
+export const FeelingPitches = [
   "The USA is really good are the trampoline olympics. If your users are American, you owe it to therm to buy these trampolines.",
   "When a child is not on a trampoline, they're doing something else which could be bad.",
   "Have you ever seen a sad person on a trampoline?",
@@ -24,7 +24,7 @@ export const feelingPitches = [
   "Our customers say they safest bouncing on one of our trampolines."
 ];
 
-export const aggressionPitches = [
+export const AggressionPitches = [
   "What? You're too good for our trampolines?",
   "All our competitors are complete garbage compared to us.",
   "This reduced price that I’m offering you today is only available until the end of the week.",

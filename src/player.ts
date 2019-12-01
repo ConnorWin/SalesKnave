@@ -14,6 +14,7 @@ export class Player extends CharacterDrawling {
   public keyPressed: EventEmitter = new EventEmitter();
   private resolve: (value?: unknown) => void;
   public hp: number;
+  public isInBossFight = false;
 
   constructor(
     public game: Game,
@@ -40,21 +41,25 @@ export class Player extends CharacterDrawling {
     this.moveKeyMap[KEYS.VK_LEFT] = 3;
 
     this.interactKeyMap = {};
-    this.moveKeyMap[KEYS.VK_1] = 0;
-    this.moveKeyMap[KEYS.VK_2] = 1;
-    this.moveKeyMap[KEYS.VK_3] = 2;
-    this.moveKeyMap[KEYS.VK_4] = 3;
+    this.interactKeyMap[KEYS.VK_1] = 0;
+    this.interactKeyMap[KEYS.VK_2] = 1;
+    this.interactKeyMap[KEYS.VK_3] = 2;
   }
 
   public act() {
     this.keyPressed.emit("refresh board");
-    let promise = new Promise(resolve => {
+
+    let promise: Promise<any> = new Promise(resolve => {
       this.resolve = resolve;
     });
 
     const listener = this.keyListener;
     window.addEventListener("keyup", listener);
-    promise = promise.then(() => window.removeEventListener("keyup", listener));
+    promise = promise.then(() => {
+      if (!this.isInBossFight) {
+        window.removeEventListener("keyup", listener);
+      }
+    });
 
     return promise;
   }
@@ -74,7 +79,6 @@ export class Player extends CharacterDrawling {
     var code = e.keyCode;
 
     var code = e.keyCode;
-
     if (code in this.moveKeyMap) {
       let direction = DIRS[4][this.moveKeyMap[code]];
       let newPosition = new Position(
@@ -124,7 +128,7 @@ export class Player extends CharacterDrawling {
       }
       this.resolve();
     } else if (code in this.interactKeyMap) {
-      this.keyPressed.emit("fight action");
+      this.keyPressed.emit("fight action", this.interactKeyMap[code]);
       this.resolve();
     }
   };
