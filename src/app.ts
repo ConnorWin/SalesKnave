@@ -5,8 +5,10 @@ import { Level } from "./level";
 import { Actors } from "./actors";
 import { Player } from "./player";
 import { Position } from "./position";
+import { EndGame } from "./end-game";
 
 function endGame(log: Log) {
+  new EndGame(document.querySelector("#map"));
   log.pause();
   log.add(
     "You are now the {gold}CEO{} of the {aqua}Leaps and Bounds Trampoline Company{}."
