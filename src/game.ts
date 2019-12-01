@@ -1,136 +1,126 @@
 import { Display, Map } from "rot-js/lib/index";
 import { Player } from "./player";
 import { Position } from "./position";
-import { CharacterDrawling } from "./characterDrawling";
-import { Character } from "./character";
-import { Boss } from "./boss";
 import { TextGenerator } from "./text-generator";
-import { Room } from "rot-js/lib/map/features";
-import { BossFight } from "./bossFight";
+import Log from "./log";
+import { Wall, Boss } from "./elements";
+import { Level } from "./level";
+import { BossFight } from "./boss-fight";
+
+const FONT_BASE = 25;
 
 export class Game {
   private display: Display;
-  private map: { [key: string]: string | string[] } = {};
   private player: Player;
-  private characters: Character[] = [];
   private generator = new TextGenerator();
-  private gameSize = { width: 75, height: 25 };
   private currentRoomName = this.generator.getNextRoomName();
-  private doors: Position[] = [];
-  private rooms: Room[] = [];
-  private currentLevelBoss: Boss;
+  private currentBossFight: BossFight = null;
+  private options = {
+    width: 300,
+    height: 300,
+    spacing: 1.1,
+    fontSize: FONT_BASE
+  };
 
-  constructor() {
-    this.display = new Display({
-      width: this.gameSize.width,
-      height: this.gameSize.height,
-      fontSize: 20
-    });
-    document.body.appendChild(this.display.getContainer());
-    this._generateMap();
-    this.player = new Player(
-      this,
-      this.keyToPosition(Object.keys(this.map)[0])
-    );
-    this.characters.push(this.player);
-    this.characters.push(
-      (this.currentLevelBoss = new Boss(
-        this.keyToPosition(Object.keys(this.map)[20])
-      ))
-    );
+  constructor(parent: Element, private log: Log, private level: Level) {
+    this.display = new Display(this.options);
+    parent.appendChild(this.display.getContainer());
+
+    if (Object.keys(this.level.map).length === 0) {
+      this.level = new Level(this.level.levelNum);
+    }
+
+    this.player = new Player(this, level.start);
+    this.level.map[this.keyFrom(level.end)] = new Boss();
+    this.initializePlayerListeners();
     this.updateMap();
-    this.player.keyPressed.on("position changed", () => {
-      this.updateMap();
-    });
-    this.player.keyPressed.on("boss fight", () => {
-      console.log("boss");
-      let actionbar = "";
-      for (let i = 0; i < this.gameSize.width; i++) {
-        actionbar += "=";
-      }
-      this.display.clear();
-      this.display.drawText(0, this.gameSize.height - 2, actionbar);
-    });
-    this.updateMap();
+    this.fit();
+    parent.classList.remove("hidden");
   }
 
   private updateMap() {
     this.display.clear();
-    this._drawWholeMap();
-    this.characters.forEach(character => {
-      this.drawCharacter(
-        character.currentPosition,
-        character.characterDrawling
-      );
-    });
     this.drawRoomName();
+    this.level.moveTo(this.player.currentPosition, this.player);
+    this.fit();
+    this.centerOn(this.player.currentPosition);
+    this.level.restore();
   }
 
-  private _generateMap() {
-    const digger = new Map.Uniform(
-      this.gameSize.width,
-      this.gameSize.height - 3,
-      {}
-    );
-    const freeCells = [];
-
-    digger.create((x, y, value) => {
-      if (value) {
-        return;
-      }
-
-      const key = this.key(x, y);
-      this.map[key] = ".";
-      freeCells.push(key);
-    });
-
-    digger.getRooms().forEach(r => {
-      this.rooms.push(r);
-      r.getDoors((x, y) => this.doors.push({ x, y }));
-    });
-  }
-
-  private _drawWholeMap() {
-    for (var key in this.map) {
-      const [x, y] = this.fromKey(key);
-      this.display.draw(x, y, this.map[key], undefined, undefined);
-      this.drawWalls(x, y);
+  private update(levelXY: Position) {
+    let visual = this.level.map[this.keyFrom(levelXY)];
+    if (!visual) {
+      return;
     }
-  }
-
-  private drawWalls(x: number, y: number) {
-    for (let dx = x - 1; dx <= x + 1; dx++) {
-      for (let dy = y - 1; dy <= y + 1; dy++) {
-        if (!this.map[this.key(dx, dy)]) {
-          this.display.draw(dx, dy, "#", undefined, undefined);
-        }
-      }
-    }
-  }
-
-  private drawCharacter(
-    position: Position,
-    characterDrawling: CharacterDrawling
-  ) {
+    let displayXY = this.levelToDisplay(levelXY);
     this.display.draw(
-      position.x,
-      position.y,
-      characterDrawling.symbol,
-      characterDrawling.foregroundColor,
-      characterDrawling.backgroundColor
+      displayXY.x,
+      displayXY.y,
+      visual.symbol,
+      visual.fg,
+      visual.bg
     );
+  }
+
+  private center: Position;
+  private centerOn(newCenter: Position) {
+    this.center = newCenter.clone();
+
+    let displayXY = new Position(0, 0);
+    for (displayXY.x = 0; displayXY.x < this.options.width; displayXY.x++) {
+      for (displayXY.y = 0; displayXY.y < this.options.height; displayXY.y++) {
+        this.update(this.displayToLevel(displayXY));
+      }
+    }
+  }
+
+  private levelToDisplay(xy: Position) {
+    // level XY to display XY; center = middle point
+    let half = new Position(this.options.width, this.options.height)
+      .scale(0.5)
+      .floor();
+    return xy.minus(this.center).plus(half);
+  }
+
+  private displayToLevel(xy: Position) {
+    // display XY to level XY; middle point = center
+    let half = new Position(this.options.width, this.options.height)
+      .scale(0.5)
+      .floor();
+    return xy.minus(half).plus(this.center);
+  }
+
+  private fit() {
+    let node = this.display.getContainer();
+    let parent = node.parentNode as HTMLElement;
+    let avail = new Position(parent.offsetWidth, parent.offsetHeight);
+
+    let size = this.display.computeSize(avail.x, avail.y);
+    size[0] += size[0] % 2 ? 2 : 1;
+    size[1] += size[1] % 2 ? 2 : 1;
+    this.options = {
+      ...this.options,
+      width: size[0],
+      height: size[1]
+    };
+    this.display.setOptions(this.options);
+
+    let current = new Position(node.offsetWidth, node.offsetHeight);
+    let offset = avail.minus(current).scale(0.5);
+    node.style.left = `${offset.x}px`;
+    node.style.top = `${offset.y}px`;
   }
 
   private roomTracker = {};
   private drawRoomName() {
-    if (this.isDoor(this.player.currentPosition)) {
+    if (this.level.isDoor(this.player.currentPosition)) {
       this.roomTracker[
         this.keyFrom(this.player.previousPosition)
       ] = this.currentRoomName;
       this.currentRoomName = this.generator.getNextRoomName();
       return;
     }
-    if (!this.inRoom(this.player.currentPosition)) {
+    if (!this.level.inRoom(this.player.currentPosition)) {
       return;
     }
 
@@ -143,30 +133,10 @@ export class Game {
 
     let name = this.currentRoomName;
 
-    if (this.isDoor(this.player.previousPosition)) {
+    if (this.level.isDoor(this.player.previousPosition)) {
       name = "You've entered The " + name;
+      this.log.add(name);
     }
-
-    this.display.drawText(
-      (this.gameSize.width - name.length) / 2,
-      this.gameSize.height - 2,
-      name
-    );
-  }
-
-  private inRoom({ x, y }: Position) {
-    return this.rooms.some(r => {
-      return (
-        r.getLeft() <= x &&
-        x <= r.getRight() &&
-        r.getTop() <= y &&
-        y <= r.getBottom()
-      );
-    });
-  }
-
-  private isDoor({ x, y }: Position) {
-    return this.doors.some(({ x: vx, y: vy }) => vx === x && vy === y);
   }
 
   private keyFrom(pos: Position) {
@@ -177,30 +147,35 @@ export class Game {
     return `${x},${y}`;
   }
 
-  private keyToPosition(key: string) {
-    const splitKey = key.split(",");
-    return new Position(
-      Number.parseInt(splitKey[0]),
-      Number.parseInt(splitKey[1])
-    );
+  public positionIsPassable(position: Position): boolean {
+    const key = this.key(position.x, position.y);
+    return key in this.level.map && !(this.level.map[key] instanceof Wall);
   }
 
-  private fromKey(key: string): [number, number] {
-    const parts = key.split(",");
-    const x = parseInt(parts[0]);
-    const y = parseInt(parts[1]);
-
-    return [x, y];
+  public bossIsInPosition(position: Position): boolean {
+    return position.x === this.level.end.x && position.y === this.level.end.y;
   }
 
-  positionIsPassable(position: Position): boolean {
-    return this.key(position.x, position.y) in this.map;
-  }
-
-  bossIsInPosition(x: number, y: number): boolean {
-    return (
-      x === this.currentLevelBoss.currentPosition.x &&
-      y === this.currentLevelBoss.currentPosition.y
-    );
+  private initializePlayerListeners() {
+    if (this.player != null) {
+      this.player.keyPressed.on("position changed", () => {
+        if (this.currentBossFight == null) {
+          this.updateMap();
+        }
+      });
+      this.player.keyPressed.on("boss fight", () => {
+        this.currentBossFight = new BossFight(1);
+        this.display.clear();
+        this.currentBossFight.drawDisplay(
+          this.display,
+          this.options.width,
+          this.options.height
+        );
+      });
+      this.player.keyPressed.on("fight action", () => {
+        if (this.currentBossFight != null) {
+        }
+      });
+    }
   }
 }

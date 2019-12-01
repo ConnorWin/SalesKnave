@@ -1,4 +1,4 @@
-import { Display, Map } from "rot-js/lib/index";
+import { Display } from "rot-js/lib/index";
 
 export class BossFight {
   constructor() {}

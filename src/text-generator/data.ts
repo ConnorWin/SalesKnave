@@ -1,17 +1,18 @@
 export const roomTypes = [
-  "Boardroom",
-  "Focus Booth",
-  "Enclave",
-  "Meeting Room",
   "Bathroom",
-  "Kitchen",
-  "Lunch Room",
-  "Locker Room",
+  "Boardroom",
   "Break Room",
-  "Mail Room",
   "Closet",
-  "Copy Room",
   "Coat Room",
+  "Copy Room",
+  "Courtyard",
+  "Enclave",
+  "Focus Booth",
+  "Kitchen",
+  "Locker Room",
+  "Lunch Room",
+  "Mail Room",
+  "Meeting Room",
   "Supply Closet"
 ];
 
