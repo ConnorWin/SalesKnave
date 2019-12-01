@@ -1,6 +1,6 @@
 import { CharacterDrawling } from "../characterDrawling";
 import { Room } from "rot-js/lib/map/features";
-import { Map } from "rot-js";
+import { Map, RNG, Path } from "rot-js";
 import { Position } from "../position";
 import { Floor, Wall, Door } from "../elements";
 
@@ -12,13 +12,26 @@ export class Level {
   public start: Position;
   public end: Position;
   constructor(public levelNum: number) {
-    // Todo: Change dimensions based on level
-    const map = this.generateMap(50, 50);
+    const averageSize = levelNum * 100;
+    const width = RNG.getUniformInt(averageSize - 25, levelNum + 25);
+    const height = RNG.getUniformInt(averageSize - 25, levelNum + 25);
+    const map = this.generateMap(width, height);
     this.map = map.map;
     this.doors = map.doors;
     this.rooms = map.rooms;
-    this.start = this.toPosition(this.rooms[0]);
-    this.end = this.toPosition(this.rooms.slice().reverse()[0]);
+    let firstRoom = this.rooms[0];
+    this.start = this.toPosition(firstRoom);
+    this.end = this.toPosition(
+      this.rooms.reduce(
+        (furthest, room) => {
+          const dist = this.distance(firstRoom, room);
+
+          if (dist > furthest.dist) return { room, dist };
+          return furthest;
+        },
+        { room: undefined as Room, dist: 0 }
+      ).room
+    );
   }
 
   private generateMap(width, height) {
@@ -102,5 +115,19 @@ export class Level {
       this.map[pos] = element;
     });
     this.tempPositions = [];
+  }
+
+  private distance(r1: Room, r2: Room) {
+    const [x1, y1] = r1.getCenter();
+    const [x2, y2] = r2.getCenter();
+    const a = new Path.AStar(x2, y2, (x, y) => {
+      const cell = this.map[this.key(x, y)];
+      return !!cell && !(cell instanceof Wall);
+    });
+
+    let dist = 0;
+    a.compute(x1, y1, () => dist++);
+
+    return dist;
   }
 }

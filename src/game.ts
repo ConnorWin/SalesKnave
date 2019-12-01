@@ -1,11 +1,9 @@
-import { Display, Map } from "rot-js/lib/index";
+import { Display } from "rot-js/lib/index";
 import { Player } from "./player";
 import { Position } from "./position";
-import { CharacterDrawling } from "./characterDrawling";
 import { TextGenerator } from "./text-generator";
-import { Room } from "rot-js/lib/map/features";
 import Log from "./log";
-import { Wall, Floor, Door, Boss } from "./elements";
+import { Wall, Boss } from "./elements";
 import { Level } from "./level";
 
 const FONT_BASE = 25;
