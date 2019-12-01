@@ -38,9 +38,9 @@ export class Game {
     this.parent.classList.remove("hidden");
   }
 
-  private updateMap() {
+  private updateMap(drawRoom = true) {
     this.display.clear();
-    this.drawRoomName();
+    if (drawRoom) this.drawRoomName();
     this.level.actors.actors.forEach(a => {
       this.level.moveTo(a.currentPosition, a);
     });
@@ -170,6 +170,7 @@ export class Game {
   public attackEnemyAt(position: Position, damage: number) {
     const e = this.level.getEntity(position);
     if (e instanceof Enemy) {
+      e.engageWith(this.log);
       e.hp -= damage;
 
       if (e.hp <= 0) {
@@ -201,6 +202,9 @@ export class Game {
         if (this.currentBossFight == null) {
           this.updateMap();
         }
+      });
+      this.player.keyPressed.on("refresh board", () => {
+        this.updateMap(false);
       });
       this.player.keyPressed.on("boss fight", () => {
         this.currentBossFight = new BossFight(1);

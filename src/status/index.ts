@@ -25,19 +25,22 @@ export default class Status {
     this.healthBar.clear();
     const color = this.getHealthColorFromPercent(health / this.maxHealth);
     this.healthBar.drawText(1, 0, `Boredom:`);
-    const missingGap = health < this.maxHealth ? 1 : 0;
-    for (let char = this.maxHealth + missingGap; char > 0; char--) {
-      this.healthBar.draw(
-        char,
-        2,
-        char <= health ? "█" : char > this.maxHealth ? "⎸" : "_",
-        char <= health ? color : undefined,
-        undefined
-      );
+    const maxSize = 25;
+    const filled = Math.floor((health / this.maxHealth) * maxSize);
+    const remaining = new Array(filled).fill("█");
+    const unfilled = new Array(maxSize - filled).fill("_");
+    if (health < this.maxHealth) {
+      this.healthBar.draw(maxSize, 2, "⎸", undefined, undefined);
     }
+    unfilled.forEach((c, i) =>
+      this.healthBar.draw(i + remaining.length, 2, c, undefined, undefined)
+    );
+    remaining.forEach((c, i) =>
+      this.healthBar.draw(i + 1, 2, c, color, undefined)
+    );
 
     this.healthBar.drawText(
-      this.maxHealth + 2,
+      maxSize + 2,
       2,
       ` %c{${color}}${health}%c{} / ${this.maxHealth}`
     );

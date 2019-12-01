@@ -84,7 +84,8 @@ function actHostile(level: Level, who: Enemy, pc: Player, log: Log) {
   let dist = who.currentPosition.dist8(pc.currentPosition);
   if (DIRS.some(dir => who.currentPosition.plus(dir).eq(pc.currentPosition))) {
     const attack = RNG.getItem(who.attacks);
-    log.add(attack.phrase);
+    who.engageWith(log);
+    log.add(`{${who.fg}}${who.name}{}: "${attack.phrase}"`);
     pc.dealDamage(attack.damage);
 
     if (pc.hp === 0) {

@@ -47,6 +47,7 @@ export class Player extends CharacterDrawling {
   }
 
   public act() {
+    this.keyPressed.emit("refresh board");
     let promise = new Promise(resolve => {
       this.resolve = resolve;
     });
@@ -95,7 +96,16 @@ export class Player extends CharacterDrawling {
           this.dealDamage(-potion.restores);
         }
       } else if (this.game.enemyIsInPosition(newPosition)) {
-        const died = this.game.attackEnemyAt(newPosition, 5);
+        const phrase = RNG.getItem(attackPhrases);
+        const damage = +RNG.getWeightedValue({
+          5: 1,
+          4: 2,
+          3: 3,
+          2: 5,
+          1: 5
+        });
+        const died = this.game.attackEnemyAt(newPosition, damage);
+        this.game.log.add(`{yellow}You{}: "${phrase}"`);
 
         if (died) {
           const inc = RNG.getUniformInt(1, 3);
@@ -106,6 +116,7 @@ export class Player extends CharacterDrawling {
           this.game.log.add(
             "Good job you made them go away. Now back to work!"
           );
+          this.game.log.pause();
         }
       }
       this.resolve();
@@ -115,3 +126,16 @@ export class Player extends CharacterDrawling {
     }
   };
 }
+
+const attackPhrases = [
+  "Go away I am busy!",
+  "I'm expecting a call from a client",
+  "I'm on my lunch break",
+  "I am late for a meeting",
+  "I heard there are cookies in the break room",
+  "Quick look there's a bear",
+  "Oh I think I am getting a phone call, please excuse me",
+  "I have to go to the bathroom",
+  "Do you hear a car alarm?",
+  "{red}Fire{}! {red}Fire{}! there's a {red}Fire{} in the office"
+];

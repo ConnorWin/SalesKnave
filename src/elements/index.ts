@@ -1,6 +1,8 @@
 import { CharacterDrawling } from "../characterDrawling";
 import { RNG } from "rot-js";
 import { Position } from "../position";
+import { names } from "./names";
+import Log from "../log";
 
 export class Wall extends CharacterDrawling {
   constructor() {
@@ -29,15 +31,17 @@ export class Boss extends CharacterDrawling {
 export abstract class Enemy extends CharacterDrawling {
   public abstract readonly attacks: { phrase: string; damage: number }[];
   public abstract hp: number;
+  public abstract type: string;
+  public engaged = false;
+  public name = RNG.getItem(names);
   public damageWeights: { [damage: number]: number } = {
     1: 1,
     2: 2,
     3: 3,
     4: 3,
-    5: 4,
-    6: 6,
-    7: 8,
-    9: 12
+    5: 6,
+    6: 7,
+    7: 9
   };
   constructor(
     public currentPosition: Position,
@@ -53,12 +57,22 @@ export abstract class Enemy extends CharacterDrawling {
       damage: +RNG.getWeightedValue(this.damageWeights)
     };
   }
+  public engageWith(log: Log) {
+    if (!this.engaged) {
+      log.pause();
+      log.add(
+        `Your ${this.type} ({${this.fg}}${this.name}{}) stops to talk to you...`
+      );
+      this.engaged = true;
+    }
+  }
 }
 
 export class Manager extends Enemy {
   constructor(pos: Position) {
     super(pos, "M", "purple");
   }
+  public type = "Manager";
   public hp = RNG.getUniformInt(8, 15);
   public attacks = [
     this.createAttack(
@@ -69,7 +83,7 @@ export class Manager extends Enemy {
     ),
     this.createAttack(`Smile more... No one likes a {red}Frowny Frank{}`),
     this.createAttack(
-      "How are the kids? Oh don't forget to complete your training"
+      "How are the kids? Oh don't forget to complete your training by the end of the day"
     ),
     this.createAttack(
       "Shouldn't you be working instead of wandering around the office?"
@@ -93,6 +107,7 @@ export class CoWorker extends Enemy {
       4: 3
     };
   }
+  public type = "Co-Worker";
   public hp = RNG.getUniformInt(5, 10);
   public attacks = [
     this.createAttack("What time is the sales meeting again?"),
@@ -120,6 +135,7 @@ export class Engineer extends Enemy {
       3: 3
     };
   }
+  public type = "Engineer friend";
   public hp = RNG.getUniformInt(3, 8);
   public attacks = [
     this.createAttack(

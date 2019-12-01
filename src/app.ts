@@ -11,7 +11,7 @@ async function init() {
   const log = new Log(document.querySelector("#log"));
   const game = new Game(document.querySelector("#map"), level, log);
   const status = new Status(document.querySelector("#status"));
-  const player = new Player(game, level.start, status);
+  const player = new Player(game, level.start, status, 30);
   actors.add(player);
   status.setMaxHealth(player.maxHp);
   status.setHealth(player.hp);
