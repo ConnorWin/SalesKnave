@@ -114,8 +114,11 @@ export class Player extends CharacterDrawling {
           this.status.setMaxHealth(this.maxHp);
           this.status.setHealth(this.hp);
           this.game.log.add(
-            "Good job you made them go away. Now back to work!"
+            `Good job you made them go away. You are now {yellow}${Math.floor(
+              (inc / (this.maxHp - inc * 1.0)) * 100
+            )}%{} more resilient to B.S.`
           );
+          this.game.log.add("Now back to work!");
           this.game.log.pause();
         }
       }
