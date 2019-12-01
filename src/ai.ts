@@ -26,7 +26,7 @@ function wander(level: Level, who: Enemy) {
 
   let dirs = DIRS.filter(dxy => {
     let entity = level.getEntity(xy.plus(dxy));
-    return entityBlocksMovement(entity);
+    return !entityBlocksMovement(entity);
   });
 
   if (!dirs.length) {
@@ -40,13 +40,13 @@ function wander(level: Level, who: Enemy) {
 
 function entityBlocksMovement(entity: CharacterDrawling) {
   return (
-    entity &&
-    (entity instanceof Wall ||
-      entity.symbol === "#" ||
-      entity instanceof Player ||
-      entity instanceof Boss ||
-      entity instanceof Enemy ||
-      entity instanceof Potion)
+    !entity ||
+    entity instanceof Wall ||
+    entity.symbol === "#" ||
+    entity instanceof Player ||
+    entity instanceof Boss ||
+    entity instanceof Enemy ||
+    entity instanceof Potion
   );
 }
 

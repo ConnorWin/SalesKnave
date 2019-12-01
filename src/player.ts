@@ -47,10 +47,10 @@ export class Player extends CharacterDrawling {
   }
 
   public act() {
-    const resolverFunc = resolve => {
+    let promise = new Promise(resolve => {
       this.resolve = resolve;
-    };
-    let promise = new Promise(resolverFunc);
+    });
+
     const listener = this.keyListener;
     window.addEventListener("keyup", listener);
     promise = promise.then(() => window.removeEventListener("keyup", listener));
