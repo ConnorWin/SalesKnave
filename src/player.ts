@@ -3,6 +3,7 @@ import { CharacterDrawling } from "./characterDrawling";
 import { Position } from "./position";
 import { Game } from "./game";
 import { EventEmitter } from "events";
+import Status from "./status";
 
 export class Player extends CharacterDrawling {
   private moveKeyMap: { [key: number]: number };
@@ -12,9 +13,16 @@ export class Player extends CharacterDrawling {
   public previousPosition: Position;
   public keyPressed: EventEmitter = new EventEmitter();
   private resolve: (value?: unknown) => void;
+  public hp: number;
 
-  constructor(public game: Game, position: Position) {
+  constructor(
+    public game: Game,
+    position: Position,
+    private status: Status,
+    public maxHp = 25
+  ) {
     super("@", "#ff0", "#0000");
+    this.hp = this.maxHp;
     this.currentPosition = position;
     this.previousPosition = position;
     this.initializeKeyMaps();
@@ -50,6 +58,15 @@ export class Player extends CharacterDrawling {
     return promise;
   }
 
+  public dealDamage(damage: number) {
+    this.hp -= damage;
+    if (this.hp <= 0) {
+      this.hp = 0;
+    }
+
+    this.status.setHealth(this.hp);
+  }
+
   private keyListener = (e: KeyboardEvent) => {
     var code = e.keyCode;
 
@@ -62,6 +79,7 @@ export class Player extends CharacterDrawling {
         this.currentPosition.y + direction[1]
       );
       if (this.game.positionIsPassable(newPosition)) {
+        const hasHealthPotion = this.game.containsHealthPotion(newPosition);
         if (this.game.bossIsInPosition(newPosition)) {
           this.keyPressed.emit("boss fight");
         } else {
@@ -69,11 +87,16 @@ export class Player extends CharacterDrawling {
           this.currentPosition = newPosition;
           this.keyPressed.emit("position changed");
         }
+
+        if (hasHealthPotion) {
+          const potion = this.game.getPotionAt(this.currentPosition);
+          this.dealDamage(-potion.restores);
+        }
       }
+      this.resolve();
     } else if (code in this.interactKeyMap) {
       this.keyPressed.emit("fight action");
+      this.resolve();
     }
-
-    this.resolve();
   };
 }

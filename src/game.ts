@@ -3,7 +3,7 @@ import { Player } from "./player";
 import { Position } from "./position";
 import { TextGenerator } from "./text-generator";
 import Log from "./log";
-import { Wall, Boss } from "./elements";
+import { Wall, Boss, Potion, Floor } from "./elements";
 import { Level } from "./level";
 import { BossFight } from "./boss-fight";
 
@@ -154,6 +154,19 @@ export class Game {
 
   public bossIsInPosition(position: Position): boolean {
     return position.x === this.level.end.x && position.y === this.level.end.y;
+  }
+
+  public containsHealthPotion(position: Position): boolean {
+    const e = this.level.map[this.keyFrom(position)];
+    return e instanceof Potion;
+  }
+
+  public getPotionAt(position: Position): Potion {
+    const e = this.level.map[this.keyFrom(position)];
+    if (e instanceof Potion) {
+      this.level.map[this.keyFrom(position)] = new Floor();
+      return e;
+    }
   }
 
   private initializePlayerListeners() {

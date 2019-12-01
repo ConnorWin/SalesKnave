@@ -23,7 +23,7 @@ export class Level {
   public startRoom: Room;
   public endRoom: Room;
 
-  constructor(public levelNum: number, private actors: Actors) {
+  constructor(public levelNum: number, public readonly actors: Actors) {
     const averageSize = levelNum * 40;
     const width = RNG.getUniformInt(averageSize - 25, averageSize + 25);
     const height = RNG.getUniformInt(averageSize - 25, averageSize + 25);
@@ -122,6 +122,15 @@ export class Level {
     this.map[cell] = who;
   }
 
+  public getEntity({ x, y }: Position) {
+    const key = this.key(x, y);
+    return (
+      this.actors.actors.find(
+        ({ currentPosition: pos }) => this.key(pos.x, pos.y) === key
+      ) || this.map[key]
+    );
+  }
+
   public restore() {
     this.tempPositions.forEach(({ pos, element }) => {
       this.map[pos] = element;
@@ -164,12 +173,12 @@ export class Level {
           this.map[this.key(x, y)] = new Potion();
         case "enemy":
           const actor = RNG.getItem([
-            new Manager(),
-            new CoWorker(),
-            new Engineer()
+            new Manager(new Position(x, y)),
+            new CoWorker(new Position(x, y)),
+            new Engineer(new Position(x, y))
           ]);
-          this.map[this.key(x, y)] = actor;
           this.actors.add(actor);
+          this.moveTo(actor.currentPosition, actor);
         case "item":
         case "empty":
         default:

@@ -9,11 +9,12 @@ async function init() {
   const actors = new Actors();
   const level = new Level(1, actors);
   const log = new Log(document.querySelector("#log"));
-  const status = new Status(document.querySelector("#status"));
   const game = new Game(document.querySelector("#map"), level, log);
-  const player = new Player(game, level.start);
+  const status = new Status(document.querySelector("#status"));
+  const player = new Player(game, level.start, status);
   actors.add(player);
-  status.setHealth(25);
+  status.setMaxHealth(player.maxHp);
+  status.setHealth(player.hp);
 
   log.add("Welcome to the {aqua}Leaps and Bounds Trampoline Company{}!");
   log.add(
@@ -25,7 +26,7 @@ async function init() {
   log.pause();
 
   game.start(player);
-  await actors.loop();
+  await actors.loop(level, log);
 }
 
 document.body.onload = () => {
