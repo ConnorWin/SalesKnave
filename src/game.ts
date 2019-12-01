@@ -20,10 +20,17 @@ export class Game {
     spacing: 1.1,
     fontSize: FONT_BASE
   };
+  private currentLevel: number = 1;
   private player: Player;
 
-  constructor(private parent: Element, private level: Level, public log: Log) {
+  constructor(
+    private parent: Element,
+    private level: Level,
+    public log: Log,
+    private advanceLevel: Function
+  ) {
     this.display = new Display(this.options);
+    parent.firstChild && parent.removeChild(parent.firstChild);
     parent.appendChild(this.display.getContainer());
 
     this.level.map[this.keyFrom(level.end)] = new Boss();
@@ -207,7 +214,10 @@ export class Game {
         this.updateMap(false);
       });
       this.player.keyPressed.on("boss fight", () => {
-        this.currentBossFight = new BossFight(1, this.player.hp);
+        this.currentBossFight = new BossFight(
+          this.currentLevel,
+          this.player.hp
+        );
         this.player.isInBossFight = true;
         this.display.clear();
         this.level.actors.clear();
@@ -216,6 +226,9 @@ export class Game {
           this.options.width,
           this.options.height
         );
+        // setTimeout(() => {
+        //   this.advanceLevel();
+        // }, 1000);
       });
       this.player.keyPressed.on("fight action", (actionNumber: number) => {
         if (this.currentBossFight != null) {
@@ -225,6 +238,8 @@ export class Game {
             this.log.pause();
             this.log.add("You have {red}died{}. Better luck next time");
           } else if (this.currentBossFight.boss.currentHealth <= 0) {
+            this.currentLevel += 1;
+            this.advanceLevel();
           } else {
             this.display.clear();
             this.currentBossFight.setFightActions();
