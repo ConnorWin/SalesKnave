@@ -13,7 +13,7 @@ async function init() {
   const game = new Game(document.querySelector("#map"), level, log);
   const player = new Player(game, level.start);
   actors.add(player);
-  // status.update();
+  status.setHealth(25);
 
   log.add("Welcome to the {aqua}Leaps and Bounds Trampoline Company{}!");
   log.add(

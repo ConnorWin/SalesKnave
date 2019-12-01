@@ -5,7 +5,8 @@ import { Game } from "./game";
 import { EventEmitter } from "events";
 
 export class Player extends CharacterDrawling {
-  private keyMap: { [key: number]: number };
+  private moveKeyMap: { [key: number]: number };
+  private interactKeyMap: { [key: number]: number };
 
   public currentPosition: Position;
   public previousPosition: Position;
@@ -16,19 +17,25 @@ export class Player extends CharacterDrawling {
     super("@", "#ff0", "#0000");
     this.currentPosition = position;
     this.previousPosition = position;
-    this.initializeKeyMap();
+    this.initializeKeyMaps();
   }
 
-  private initializeKeyMap() {
-    this.keyMap = {};
-    this.keyMap[KEYS.VK_W] = 0;
-    this.keyMap[KEYS.VK_D] = 1;
-    this.keyMap[KEYS.VK_S] = 2;
-    this.keyMap[KEYS.VK_A] = 3;
-    this.keyMap[KEYS.VK_UP] = 0;
-    this.keyMap[KEYS.VK_RIGHT] = 1;
-    this.keyMap[KEYS.VK_DOWN] = 2;
-    this.keyMap[KEYS.VK_LEFT] = 3;
+  private initializeKeyMaps() {
+    this.moveKeyMap = {};
+    this.moveKeyMap[KEYS.VK_W] = 0;
+    this.moveKeyMap[KEYS.VK_D] = 1;
+    this.moveKeyMap[KEYS.VK_S] = 2;
+    this.moveKeyMap[KEYS.VK_A] = 3;
+    this.moveKeyMap[KEYS.VK_UP] = 0;
+    this.moveKeyMap[KEYS.VK_RIGHT] = 1;
+    this.moveKeyMap[KEYS.VK_DOWN] = 2;
+    this.moveKeyMap[KEYS.VK_LEFT] = 3;
+
+    this.interactKeyMap = {};
+    this.moveKeyMap[KEYS.VK_1] = 0;
+    this.moveKeyMap[KEYS.VK_2] = 1;
+    this.moveKeyMap[KEYS.VK_3] = 2;
+    this.moveKeyMap[KEYS.VK_4] = 3;
   }
 
   public act() {
@@ -46,17 +53,25 @@ export class Player extends CharacterDrawling {
   private keyListener = (e: KeyboardEvent) => {
     var code = e.keyCode;
 
-    if (code in this.keyMap) {
-      let direction = DIRS[4][this.keyMap[code]];
+    var code = e.keyCode;
+
+    if (code in this.moveKeyMap) {
+      let direction = DIRS[4][this.moveKeyMap[code]];
       let newPosition = new Position(
         this.currentPosition.x + direction[0],
         this.currentPosition.y + direction[1]
       );
       if (this.game.positionIsPassable(newPosition)) {
-        this.previousPosition = this.currentPosition.clone();
-        this.currentPosition = newPosition;
+        if (this.game.bossIsInPosition(newPosition)) {
+          this.keyPressed.emit("boss fight");
+        } else {
+          this.previousPosition = this.currentPosition.clone();
+          this.currentPosition = newPosition;
+          this.keyPressed.emit("position changed");
+        }
       }
-      this.keyPressed.emit("position changed");
+    } else if (code in this.interactKeyMap) {
+      this.keyPressed.emit("fight action");
     }
 
     this.resolve();

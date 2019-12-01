@@ -5,6 +5,7 @@ import { TextGenerator } from "./text-generator";
 import Log from "./log";
 import { Wall, Boss } from "./elements";
 import { Level } from "./level";
+import { BossFight } from "./boss-fight";
 
 const FONT_BASE = 25;
 
@@ -12,6 +13,7 @@ export class Game {
   private display: Display;
   private generator = new TextGenerator();
   private currentRoomName = this.generator.getNextRoomName();
+  private currentBossFight: BossFight = null;
   private options = {
     width: 300,
     height: 300,
@@ -29,9 +31,7 @@ export class Game {
 
   public start(player: Player) {
     this.player = player;
-    this.player.keyPressed.on("position changed", () => {
-      this.updateMap();
-    });
+    this.initializePlayerListeners();
     this.updateMap();
     this.fit();
 
@@ -150,5 +150,32 @@ export class Game {
   public positionIsPassable(position: Position): boolean {
     const key = this.key(position.x, position.y);
     return key in this.level.map && !(this.level.map[key] instanceof Wall);
+  }
+
+  public bossIsInPosition(position: Position): boolean {
+    return position.x === this.level.end.x && position.y === this.level.end.y;
+  }
+
+  private initializePlayerListeners() {
+    if (this.player != null) {
+      this.player.keyPressed.on("position changed", () => {
+        if (this.currentBossFight == null) {
+          this.updateMap();
+        }
+      });
+      this.player.keyPressed.on("boss fight", () => {
+        this.currentBossFight = new BossFight(1);
+        this.display.clear();
+        this.currentBossFight.drawDisplay(
+          this.display,
+          this.options.width,
+          this.options.height
+        );
+      });
+      this.player.keyPressed.on("fight action", () => {
+        if (this.currentBossFight != null) {
+        }
+      });
+    }
   }
 }
