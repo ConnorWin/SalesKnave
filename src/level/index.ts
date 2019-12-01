@@ -23,9 +23,9 @@ export class Level {
   public endRoom: Room;
 
   constructor(public levelNum: number) {
-    const averageSize = levelNum * 50 + 100;
-    const width = RNG.getUniformInt(averageSize - 25, levelNum + 25);
-    const height = RNG.getUniformInt(averageSize - 25, levelNum + 25);
+    const averageSize = levelNum * 40;
+    const width = RNG.getUniformInt(averageSize - 25, averageSize + 25);
+    const height = RNG.getUniformInt(averageSize - 25, averageSize + 25);
     const map = this.generateMap(width, height);
     this.map = map.map;
     this.doors = map.doors;
@@ -156,8 +156,8 @@ export class Level {
 
     rooms.forEach(room => {
       const feature = RNG.getWeightedValue(features);
-      const x = RNG.getUniformInt(room.getLeft(), room.getRight());
-      const y = RNG.getUniformInt(room.getTop(), room.getBottom());
+      const x = RNG.getUniformInt(room.getLeft() + 1, room.getRight() - 1);
+      const y = RNG.getUniformInt(room.getTop() + 1, room.getBottom() - 1);
       switch (feature) {
         case "potion":
           this.map[this.key(x, y)] = new Potion();
