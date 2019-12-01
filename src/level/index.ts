@@ -12,7 +12,7 @@ export class Level {
   public start: Position;
   public end: Position;
   constructor(public levelNum: number) {
-    const averageSize = levelNum * 100;
+    const averageSize = levelNum * 50 + 100;
     const width = RNG.getUniformInt(averageSize - 25, levelNum + 25);
     const height = RNG.getUniformInt(averageSize - 25, levelNum + 25);
     const map = this.generateMap(width, height);
