@@ -1,4 +1,4 @@
-import { Display, Map } from "rot-js/lib/index";
+import { Display } from "rot-js/lib/index";
 import { Player } from "./player";
 import { Position } from "./position";
 import { TextGenerator } from "./text-generator";
