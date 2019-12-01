@@ -42,6 +42,7 @@ export class Level {
       },
       { room: undefined as Room, dist: 0 }
     ).room;
+    // this.endRoom = this.startRoom;
     this.end = this.toPosition(this.endRoom);
     this.generateFeatures();
   }
@@ -171,6 +172,7 @@ export class Level {
       switch (feature) {
         case "potion":
           this.map[this.key(x, y)] = new Potion();
+          break;
         case "enemy":
           const actor = RNG.getItem([
             new Manager(new Position(x, y)),
@@ -178,6 +180,7 @@ export class Level {
             new Engineer(new Position(x, y))
           ]);
           this.actors.add(actor);
+          break;
         case "item":
         case "empty":
         default:

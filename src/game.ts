@@ -22,8 +22,14 @@ export class Game {
   };
   private player: Player;
 
-  constructor(private parent: Element, private level: Level, public log: Log) {
+  constructor(
+    private parent: Element,
+    private level: Level,
+    public log: Log,
+    private advanceLevel: Function
+  ) {
     this.display = new Display(this.options);
+    parent.firstChild && parent.removeChild(parent.firstChild);
     parent.appendChild(this.display.getContainer());
 
     this.level.map[this.keyFrom(level.end)] = new Boss();
@@ -209,14 +215,19 @@ export class Game {
       this.player.keyPressed.on("boss fight", () => {
         this.currentBossFight = new BossFight(1);
         this.display.clear();
+        this.level.actors.clear();
         this.currentBossFight.drawDisplay(
           this.display,
           this.options.width,
           this.options.height
         );
+        // setTimeout(() => {
+        //   this.advanceLevel();
+        // }, 1000);
       });
       this.player.keyPressed.on("fight action", () => {
         if (this.currentBossFight != null) {
+          this.advanceLevel();
         }
       });
     }

@@ -93,7 +93,13 @@ export class Player extends CharacterDrawling {
 
         if (hasHealthPotion) {
           const potion = this.game.getPotionAt(this.currentPosition);
-          this.dealDamage(-potion.restores);
+          const restores = Math.min(this.maxHp - this.hp, potion.restores);
+          this.dealDamage(-restores);
+          this.game.log.pause();
+          this.game.log.add(
+            `You drank a {teal}potion{} that restored your boredom by {gold}${restores}{} points.`
+          );
+          this.game.log.pause();
         }
       } else if (this.game.enemyIsInPosition(newPosition)) {
         const phrase = RNG.getItem(attackPhrases);
@@ -105,7 +111,7 @@ export class Player extends CharacterDrawling {
           1: 5
         });
         const died = this.game.attackEnemyAt(newPosition, damage);
-        this.game.log.add(`{yellow}You{}: "${phrase}"`);
+        this.game.log.add(`{gold}You{}: "${phrase}"`);
 
         if (died) {
           const inc = RNG.getUniformInt(1, 3);
@@ -114,7 +120,7 @@ export class Player extends CharacterDrawling {
           this.status.setMaxHealth(this.maxHp);
           this.status.setHealth(this.hp);
           this.game.log.add(
-            `Good job you made them go away. You are now {yellow}${Math.floor(
+            `Good job you made them go away. You are now {gold}${Math.floor(
               (inc / (this.maxHp - inc * 1.0)) * 100
             )}%{} more resilient to B.S.`
           );
