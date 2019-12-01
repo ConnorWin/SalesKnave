@@ -28,4 +28,8 @@ export class Position {
   dist8(xy) {
     return this.minus(xy).norm8();
   }
+
+  eq(xy) {
+    return this.x === xy.x && this.y === xy.y;
+  }
 }

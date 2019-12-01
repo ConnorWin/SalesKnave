@@ -1,28 +1,17 @@
-// import XY from "util/xy.js";
-// import pc from "being/pc.js";
-// import { DIRS } from "conf.js";
-// import { BLOCKS_MOVEMENT } from "entity.js";
-// import * as rules from "rules.js";
-// import * as combat from "combat/combat.js";
-// import * as log from "ui/log.js";
 import { RNG } from "rot-js";
 import { Position } from "./position";
 import { Level } from "./level";
 import { Player } from "./player";
-import { Wall, Boss, Enemy, Door } from "./elements";
+import { Wall, Boss, Enemy, Door, Potion } from "./elements";
 import { CharacterDrawling } from "./characterDrawling";
 import Log from "./log";
 
 const AI_RANGE = 7;
 const AI_IDLE = 0.4;
 const DIRS = [
-  new Position(-1, -1),
   new Position(0, -1),
-  new Position(1, -1),
   new Position(1, 0),
-  new Position(1, 1),
   new Position(0, 1),
-  new Position(-1, 1),
   new Position(-1, 0)
 ];
 
@@ -46,7 +35,6 @@ function wander(level: Level, who: Enemy) {
 
   let dir = RNG.getItem(dirs);
   who.currentPosition = xy.plus(dir);
-  level.moveTo(who.currentPosition, who);
   return result;
 }
 
@@ -54,10 +42,11 @@ function entityBlocksMovement(entity: CharacterDrawling) {
   return (
     entity &&
     (entity instanceof Wall ||
+      entity.symbol === "#" ||
       entity instanceof Player ||
       entity instanceof Boss ||
-      entity instanceof Door ||
-      entity["hp"] > 0)
+      entity instanceof Enemy ||
+      entity instanceof Potion)
   );
 }
 
@@ -86,7 +75,6 @@ function getCloserToPC(level: Level, who: Enemy, pc: Player) {
   if (avail.length) {
     const to = RNG.getItem(avail);
     who.currentPosition = to;
-    level.moveTo(to, who);
   }
 
   return Promise.resolve();
@@ -94,16 +82,20 @@ function getCloserToPC(level: Level, who: Enemy, pc: Player) {
 
 function actHostile(level: Level, who: Enemy, pc: Player, log: Log) {
   let dist = who.currentPosition.dist8(pc.currentPosition);
-  if (dist == 1) {
-    // log.add("{#f00}You are attacked by %a!{}", who);
-    // return combat.start(who);
+  if (DIRS.some(dir => who.currentPosition.plus(dir).eq(pc.currentPosition))) {
     const attack = RNG.getItem(who.attacks);
     log.add(attack.phrase);
     pc.dealDamage(attack.damage);
+
+    if (pc.hp === 0) {
+      level.actors.clear();
+      log.pause();
+      log.add("You have {red}died{}. Better luck next time");
+    }
     return;
   }
 
-  if (dist <= AI_RANGE) {
+  if (dist <= AI_RANGE && RNG.getUniform() > 0.25) {
     return getCloserToPC(level, who, pc);
   } else {
     return wander(level, who);

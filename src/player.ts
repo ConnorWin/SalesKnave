@@ -1,4 +1,4 @@
-import { KEYS, DIRS } from "rot-js";
+import { KEYS, DIRS, RNG } from "rot-js";
 import { CharacterDrawling } from "./characterDrawling";
 import { Position } from "./position";
 import { Game } from "./game";
@@ -62,6 +62,8 @@ export class Player extends CharacterDrawling {
     this.hp -= damage;
     if (this.hp <= 0) {
       this.hp = 0;
+    } else if (this.hp > this.maxHp) {
+      this.hp = this.maxHp;
     }
 
     this.status.setHealth(this.hp);
@@ -91,6 +93,19 @@ export class Player extends CharacterDrawling {
         if (hasHealthPotion) {
           const potion = this.game.getPotionAt(this.currentPosition);
           this.dealDamage(-potion.restores);
+        }
+      } else if (this.game.enemyIsInPosition(newPosition)) {
+        const died = this.game.attackEnemyAt(newPosition, 5);
+
+        if (died) {
+          const inc = RNG.getUniformInt(1, 3);
+          this.maxHp += inc;
+          this.hp += inc;
+          this.status.setMaxHealth(this.maxHp);
+          this.status.setHealth(this.hp);
+          this.game.log.add(
+            "Good job you made them go away. Now back to work!"
+          );
         }
       }
       this.resolve();

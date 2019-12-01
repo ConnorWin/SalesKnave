@@ -3,7 +3,7 @@ import { Player } from "./player";
 import { Position } from "./position";
 import { TextGenerator } from "./text-generator";
 import Log from "./log";
-import { Wall, Boss, Potion, Floor } from "./elements";
+import { Wall, Boss, Potion, Floor, Enemy } from "./elements";
 import { Level } from "./level";
 import { BossFight } from "./boss-fight";
 
@@ -22,7 +22,7 @@ export class Game {
   };
   private player: Player;
 
-  constructor(private parent: Element, private level: Level, private log: Log) {
+  constructor(private parent: Element, private level: Level, public log: Log) {
     this.display = new Display(this.options);
     parent.appendChild(this.display.getContainer());
 
@@ -41,7 +41,9 @@ export class Game {
   private updateMap() {
     this.display.clear();
     this.drawRoomName();
-    this.level.moveTo(this.player.currentPosition, this.player);
+    this.level.actors.actors.forEach(a => {
+      this.level.moveTo(a.currentPosition, a);
+    });
     this.fit();
     this.centerOn(this.player.currentPosition);
     this.level.restore();
@@ -149,11 +151,35 @@ export class Game {
 
   public positionIsPassable(position: Position): boolean {
     const key = this.key(position.x, position.y);
-    return key in this.level.map && !(this.level.map[key] instanceof Wall);
+    return (
+      key in this.level.map &&
+      !(this.level.map[key] instanceof Wall) &&
+      !(this.level.getEntity(position) instanceof Enemy)
+    );
   }
 
   public bossIsInPosition(position: Position): boolean {
     return position.x === this.level.end.x && position.y === this.level.end.y;
+  }
+
+  public enemyIsInPosition(position: Position): boolean {
+    const e = this.level.getEntity(position);
+    return e instanceof Enemy;
+  }
+
+  public attackEnemyAt(position: Position, damage: number) {
+    const e = this.level.getEntity(position);
+    if (e instanceof Enemy) {
+      e.hp -= damage;
+
+      if (e.hp <= 0) {
+        this.level.actors.remove(e);
+        this.update(position);
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public containsHealthPotion(position: Position): boolean {

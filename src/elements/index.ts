@@ -29,6 +29,16 @@ export class Boss extends CharacterDrawling {
 export abstract class Enemy extends CharacterDrawling {
   public abstract readonly attacks: { phrase: string; damage: number }[];
   public abstract hp: number;
+  public damageWeights: { [damage: number]: number } = {
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 3,
+    5: 4,
+    6: 6,
+    7: 8,
+    9: 12
+  };
   constructor(
     public currentPosition: Position,
     symbol: string,
@@ -40,16 +50,7 @@ export abstract class Enemy extends CharacterDrawling {
   protected createAttack(phrase: string) {
     return {
       phrase,
-      damage: +RNG.getWeightedValue({
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 3,
-        5: 4,
-        6: 6,
-        7: 8,
-        9: 12
-      })
+      damage: +RNG.getWeightedValue(this.damageWeights)
     };
   }
 }
@@ -85,6 +86,12 @@ export class Manager extends Enemy {
 export class CoWorker extends Enemy {
   constructor(pos: Position) {
     super(pos, "C", "blue");
+    this.damageWeights = {
+      1: 1,
+      2: 2,
+      3: 3,
+      4: 3
+    };
   }
   public hp = RNG.getUniformInt(5, 10);
   public attacks = [
@@ -107,6 +114,11 @@ export class CoWorker extends Enemy {
 export class Engineer extends Enemy {
   constructor(pos: Position) {
     super(pos, "E", "gray");
+    this.damageWeights = {
+      1: 1,
+      2: 2,
+      3: 3
+    };
   }
   public hp = RNG.getUniformInt(3, 8);
   public attacks = [
@@ -125,7 +137,7 @@ export class Engineer extends Enemy {
       "I've been going to the beach too much. Now I am a {orange}tan{}gent"
     ),
     this.createAttack(
-      "If your sales are down, don't worry, I'm sure you'll {bounce} back."
+      "If your sales are down, don't worry, I'm sure you'll {blue}bounce{} back."
     )
   ];
 }

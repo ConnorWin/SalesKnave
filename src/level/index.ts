@@ -156,7 +156,7 @@ export class Level {
     let features = {
       item: 6,
       potion: 4,
-      enemy: 4,
+      enemy: 5,
       empty: 1
     };
 
@@ -178,7 +178,6 @@ export class Level {
             new Engineer(new Position(x, y))
           ]);
           this.actors.add(actor);
-          this.moveTo(actor.currentPosition, actor);
         case "item":
         case "empty":
         default:
