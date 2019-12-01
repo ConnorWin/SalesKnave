@@ -3,7 +3,7 @@ import { Player } from "./player";
 import { Position } from "./position";
 import { TextGenerator } from "./text-generator";
 import Log from "./log";
-import { Wall, Boss } from "./elements";
+import { Wall, Boss, Potion, Floor, Enemy } from "./elements";
 import { Level } from "./level";
 import { BossFight } from "./boss-fight";
 
@@ -11,7 +11,6 @@ const FONT_BASE = 25;
 
 export class Game {
   private display: Display;
-  private player: Player;
   private generator = new TextGenerator();
   private currentRoomName = this.generator.getNextRoomName();
   private currentBossFight: BossFight = null;
@@ -21,27 +20,30 @@ export class Game {
     spacing: 1.1,
     fontSize: FONT_BASE
   };
+  private player: Player;
 
-  constructor(parent: Element, private log: Log, private level: Level) {
+  constructor(private parent: Element, private level: Level, public log: Log) {
     this.display = new Display(this.options);
     parent.appendChild(this.display.getContainer());
 
-    if (Object.keys(this.level.map).length === 0) {
-      this.level = new Level(this.level.levelNum);
-    }
-
-    this.player = new Player(this, level.start);
     this.level.map[this.keyFrom(level.end)] = new Boss();
+  }
+
+  public start(player: Player) {
+    this.player = player;
     this.initializePlayerListeners();
     this.updateMap();
     this.fit();
-    parent.classList.remove("hidden");
+
+    this.parent.classList.remove("hidden");
   }
 
   private updateMap() {
     this.display.clear();
     this.drawRoomName();
-    this.level.moveTo(this.player.currentPosition, this.player);
+    this.level.actors.actors.forEach(a => {
+      this.level.moveTo(a.currentPosition, a);
+    });
     this.fit();
     this.centerOn(this.player.currentPosition);
     this.level.restore();
@@ -149,11 +151,48 @@ export class Game {
 
   public positionIsPassable(position: Position): boolean {
     const key = this.key(position.x, position.y);
-    return key in this.level.map && !(this.level.map[key] instanceof Wall);
+    return (
+      key in this.level.map &&
+      !(this.level.map[key] instanceof Wall) &&
+      !(this.level.getEntity(position) instanceof Enemy)
+    );
   }
 
   public bossIsInPosition(position: Position): boolean {
     return position.x === this.level.end.x && position.y === this.level.end.y;
+  }
+
+  public enemyIsInPosition(position: Position): boolean {
+    const e = this.level.getEntity(position);
+    return e instanceof Enemy;
+  }
+
+  public attackEnemyAt(position: Position, damage: number) {
+    const e = this.level.getEntity(position);
+    if (e instanceof Enemy) {
+      e.hp -= damage;
+
+      if (e.hp <= 0) {
+        this.level.actors.remove(e);
+        this.update(position);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public containsHealthPotion(position: Position): boolean {
+    const e = this.level.map[this.keyFrom(position)];
+    return e instanceof Potion;
+  }
+
+  public getPotionAt(position: Position): Potion {
+    const e = this.level.map[this.keyFrom(position)];
+    if (e instanceof Potion) {
+      this.level.map[this.keyFrom(position)] = new Floor();
+      return e;
+    }
   }
 
   private initializePlayerListeners() {

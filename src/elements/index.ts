@@ -1,5 +1,6 @@
 import { CharacterDrawling } from "../characterDrawling";
 import { RNG } from "rot-js";
+import { Position } from "../position";
 
 export class Wall extends CharacterDrawling {
   constructor() {
@@ -25,29 +26,40 @@ export class Boss extends CharacterDrawling {
   }
 }
 
-abstract class Enemy extends CharacterDrawling {
+export abstract class Enemy extends CharacterDrawling {
   public abstract readonly attacks: { phrase: string; damage: number }[];
+  public abstract hp: number;
+  public damageWeights: { [damage: number]: number } = {
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 3,
+    5: 4,
+    6: 6,
+    7: 8,
+    9: 12
+  };
+  constructor(
+    public currentPosition: Position,
+    symbol: string,
+    fg?: string,
+    bg?: string
+  ) {
+    super(symbol, fg, bg);
+  }
   protected createAttack(phrase: string) {
     return {
       phrase,
-      damage: +RNG.getWeightedValue({
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 3,
-        5: 4,
-        6: 6,
-        7: 8,
-        9: 12
-      })
+      damage: +RNG.getWeightedValue(this.damageWeights)
     };
   }
 }
 
 export class Manager extends Enemy {
-  constructor() {
-    super("M", "purple");
+  constructor(pos: Position) {
+    super(pos, "M", "purple");
   }
+  public hp = RNG.getUniformInt(8, 15);
   public attacks = [
     this.createAttack(
       "Sales are down this quarter. You need to work this weekend"
@@ -72,9 +84,16 @@ export class Manager extends Enemy {
 }
 
 export class CoWorker extends Enemy {
-  constructor() {
-    super("C", "blue");
+  constructor(pos: Position) {
+    super(pos, "C", "blue");
+    this.damageWeights = {
+      1: 1,
+      2: 2,
+      3: 3,
+      4: 3
+    };
   }
+  public hp = RNG.getUniformInt(5, 10);
   public attacks = [
     this.createAttack("What time is the sales meeting again?"),
     this.createAttack("Someone has a case of the Monday's"),
@@ -93,9 +112,15 @@ export class CoWorker extends Enemy {
 }
 
 export class Engineer extends Enemy {
-  constructor() {
-    super("E", "gray");
+  constructor(pos: Position) {
+    super(pos, "E", "gray");
+    this.damageWeights = {
+      1: 1,
+      2: 2,
+      3: 3
+    };
   }
+  public hp = RNG.getUniformInt(3, 8);
   public attacks = [
     this.createAttack(
       "We fixed the faulty springs. Now only 20% of people get hurt on our {blue}Trampolines{}!"
@@ -112,7 +137,7 @@ export class Engineer extends Enemy {
       "I've been going to the beach too much. Now I am a {orange}tan{}gent"
     ),
     this.createAttack(
-      "If your sales are down, don't worry, I'm sure you'll {bounce} back."
+      "If your sales are down, don't worry, I'm sure you'll {blue}bounce{} back."
     )
   ];
 }
@@ -120,10 +145,13 @@ export class Engineer extends Enemy {
 export class Potion extends CharacterDrawling {
   public readonly restores = +RNG.getWeightedValue({
     1: 1,
-    2: 2,
-    3: 2,
-    4: 3,
-    5: 3
+    2: 1,
+    3: 1,
+    4: 2,
+    5: 2,
+    6: 3,
+    7: 3,
+    8: 3
   });
   constructor() {
     super("🧪", "teal");

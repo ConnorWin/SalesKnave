@@ -20,4 +20,16 @@ export class Position {
   floor() {
     return new Position(Math.floor(this.x), Math.floor(this.y));
   }
+
+  norm8() {
+    return Math.max(Math.abs(this.x), Math.abs(this.y));
+  }
+
+  dist8(xy) {
+    return this.minus(xy).norm8();
+  }
+
+  eq(xy) {
+    return this.x === xy.x && this.y === xy.y;
+  }
 }

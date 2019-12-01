@@ -3,6 +3,7 @@ import { Display, Color } from "rot-js";
 const FONT_BASE = 17;
 export default class Status {
   private healthBar: Display;
+  private maxHealth: number = 25;
   private readonly options = {
     width: 50,
     height: 20,
@@ -10,10 +11,14 @@ export default class Status {
     fontSize: FONT_BASE
   };
 
-  constructor(parent: Element, private maxHealth: number = 25) {
+  constructor(parent: Element) {
     parent.classList.remove("hidden");
     this.healthBar = new Display(this.options);
     parent.appendChild(this.healthBar.getContainer());
+  }
+
+  setMaxHealth(health: number) {
+    this.maxHealth = health;
   }
 
   setHealth(health: number) {
