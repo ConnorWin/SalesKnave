@@ -1,27 +1,25 @@
 import { Display, Color } from "rot-js";
 
-const FONT_BASE = 18;
+const FONT_BASE = 17;
 export default class Status {
-  private display: Display;
   private healthBar: Display;
-  private options = {
+  private readonly options = {
     width: 50,
     height: 20,
-    spacing: 1.1,
+    spacing: 0.85,
     fontSize: FONT_BASE
   };
 
   constructor(parent: Element, private maxHealth: number = 25) {
     parent.classList.remove("hidden");
-    this.display = new Display(this.options);
-    this.healthBar = new Display({ ...this.options, spacing: 0.85 });
+    this.healthBar = new Display(this.options);
     parent.appendChild(this.healthBar.getContainer());
-    parent.appendChild(this.display.getContainer());
   }
 
   setHealth(health: number) {
-    this.display.clear();
+    this.healthBar.clear();
     const color = this.getHealthColorFromPercent(health / this.maxHealth);
+    this.healthBar.drawText(1, 0, `Boredom:`);
     const missingGap = health < this.maxHealth ? 1 : 0;
     for (let char = this.maxHealth + missingGap; char > 0; char--) {
       this.healthBar.draw(
@@ -32,6 +30,12 @@ export default class Status {
         undefined
       );
     }
+
+    this.healthBar.drawText(
+      this.maxHealth + 2,
+      2,
+      ` %c{${color}}${health}%c{} / ${this.maxHealth}`
+    );
   }
 
   private getHealthColorFromPercent(per: number) {
