@@ -3,12 +3,12 @@ export const logicalPitches = [
   "Trampolines are much safer to jump on than cars or couches.",
   "Statistically, trampolines are safer than most people think.",
   "Most trampoline injuries are caused to to improper setup from improper parents.",
-  "Our tramplines used springs or cable depending on your preference.",
-  "Enclosing out trampolines in a net will provide your users with an inescapable cocoon of saftely.",
-  "NASA says using our trampolines for 10 minues is the same as walking for 30 with no ligament stress.",
-  "Our trampolines are recomened for children in pediatric therapy.",
+  "Our trampolines used springs or cable depending on your preference.",
+  "Enclosing our trampolines in a net will provide your users with an inescapable cocoon of safety.",
+  "NASA says using our trampolines for 10 minutes is the same as walking for 30 with no ligament stress.",
+  "Our trampolines are recommend for children in pediatric therapy.",
   "The Center for Disease Control and Prevention says our trampolines provide many of the same benefits as yoga.",
-  "Professional trampolinists never bounce barefoot. Thats why I'll throw in our protective footware for every model you buy."
+  "Professional trampolinists never bounce barefoot. Thats why I'll throw in our protective footwear for every model you buy."
 ];
 
 export const feelingPitches = [
@@ -26,12 +26,12 @@ export const feelingPitches = [
 
 export const agressionPitches = [
   "What? You're too good for our trampolines?",
-  "All our competators are complete garbage compared to us.",
+  "All our competitors are complete garbage compared to us.",
   "This reduced price that I’m offering you today is only available until the end of the week.",
   "What can I do to change your mind?",
   "If I remove the spare parts package does is that a better price point for you?",
   "You, me, a 10,000 trampoline deal. What do you say?",
-  "You want to use slides at your theme park? No, no trampoliiines, thats where its at these days.",
+  "You want to use slides at your theme park? No, no trampolines, thats where its at these days.",
   "If you're not satisfied with your first bounce, you can send it all back.",
   "That's the offer. Bounce it or leave it.",
   "What can I do to get you leaping and bouncing on our latest model today?",
