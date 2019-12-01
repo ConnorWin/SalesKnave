@@ -2,13 +2,17 @@ import { Game } from "./game";
 import Log from "./log";
 import Status from "./status";
 import { Level } from "./level";
+import { Actors } from "./actors";
+import { Player } from "./player";
 
-function init() {
-  const level = new Level(1);
+async function init() {
+  const actors = new Actors();
+  const level = new Level(1, actors);
   const log = new Log(document.querySelector("#log"));
   const status = new Status(document.querySelector("#status"));
-  const game = new Game(document.querySelector("#map"), log, level);
-
+  const game = new Game(document.querySelector("#map"), level, log);
+  const player = new Player(game, level.start);
+  actors.add(player);
   // status.update();
 
   log.add("Welcome to the {aqua}Leaps and Bounds Trampoline Company{}!");
@@ -20,11 +24,8 @@ function init() {
   log.add("To move around, use the {#fff}arrow keys{}.");
   log.pause();
 
-  status.setHealth(10);
-
-  // level.activate(level.start, pc);
-
-  // actors.loop();
+  game.start(player);
+  await actors.loop();
 }
 
 document.body.onload = () => {

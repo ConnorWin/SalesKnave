@@ -10,7 +10,6 @@ const FONT_BASE = 25;
 
 export class Game {
   private display: Display;
-  private player: Player;
   private generator = new TextGenerator();
   private currentRoomName = this.generator.getNextRoomName();
   private options = {
@@ -19,24 +18,24 @@ export class Game {
     spacing: 1.1,
     fontSize: FONT_BASE
   };
+  private player: Player;
 
-  constructor(parent: Element, private log: Log, private level: Level) {
+  constructor(private parent: Element, private level: Level, private log: Log) {
     this.display = new Display(this.options);
     parent.appendChild(this.display.getContainer());
 
-    if (Object.keys(this.level.map).length === 0) {
-      this.level = new Level(this.level.levelNum);
-    }
-
-    this.player = new Player(this, level.start);
     this.level.map[this.keyFrom(level.end)] = new Boss();
+  }
+
+  public start(player: Player) {
+    this.player = player;
     this.player.keyPressed.on("position changed", () => {
       this.updateMap();
     });
     this.updateMap();
     this.fit();
 
-    parent.classList.remove("hidden");
+    this.parent.classList.remove("hidden");
   }
 
   private updateMap() {

@@ -11,6 +11,7 @@ import {
   CoWorker,
   Engineer
 } from "../elements";
+import { Actors } from "../actors";
 
 type LevelMap = { [key: string]: CharacterDrawling };
 export class Level {
@@ -22,7 +23,7 @@ export class Level {
   public startRoom: Room;
   public endRoom: Room;
 
-  constructor(public levelNum: number) {
+  constructor(public levelNum: number, private actors: Actors) {
     const averageSize = levelNum * 40;
     const width = RNG.getUniformInt(averageSize - 25, averageSize + 25);
     const height = RNG.getUniformInt(averageSize - 25, averageSize + 25);
@@ -162,11 +163,13 @@ export class Level {
         case "potion":
           this.map[this.key(x, y)] = new Potion();
         case "enemy":
-          this.map[this.key(x, y)] = RNG.getItem([
+          const actor = RNG.getItem([
             new Manager(),
             new CoWorker(),
             new Engineer()
           ]);
+          this.map[this.key(x, y)] = actor;
+          this.actors.add(actor);
         case "item":
         case "empty":
         default:

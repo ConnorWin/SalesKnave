@@ -10,13 +10,13 @@ export class Player extends CharacterDrawling {
   public currentPosition: Position;
   public previousPosition: Position;
   public keyPressed: EventEmitter = new EventEmitter();
+  private resolve: (value?: unknown) => void;
 
   constructor(public game: Game, position: Position) {
     super("@", "#ff0", "#0000");
     this.currentPosition = position;
     this.previousPosition = position;
     this.initializeKeyMap();
-    this.addInputListener();
   }
 
   private initializeKeyMap() {
@@ -31,22 +31,34 @@ export class Player extends CharacterDrawling {
     this.keyMap[KEYS.VK_LEFT] = 3;
   }
 
-  private addInputListener() {
-    window.addEventListener("keyup", (e: KeyboardEvent) => {
-      var code = e.keyCode;
+  public act() {
+    const resolverFunc = resolve => {
+      this.resolve = resolve;
+    };
+    let promise = new Promise(resolverFunc);
+    const listener = this.keyListener;
+    window.addEventListener("keyup", listener);
+    promise = promise.then(() => window.removeEventListener("keyup", listener));
 
-      if (code in this.keyMap) {
-        let direction = DIRS[4][this.keyMap[code]];
-        let newPosition = new Position(
-          this.currentPosition.x + direction[0],
-          this.currentPosition.y + direction[1]
-        );
-        if (this.game.positionIsPassable(newPosition)) {
-          this.previousPosition = this.currentPosition.clone();
-          this.currentPosition = newPosition;
-        }
-        this.keyPressed.emit("position changed");
-      }
-    });
+    return promise;
   }
+
+  private keyListener = (e: KeyboardEvent) => {
+    var code = e.keyCode;
+
+    if (code in this.keyMap) {
+      let direction = DIRS[4][this.keyMap[code]];
+      let newPosition = new Position(
+        this.currentPosition.x + direction[0],
+        this.currentPosition.y + direction[1]
+      );
+      if (this.game.positionIsPassable(newPosition)) {
+        this.previousPosition = this.currentPosition.clone();
+        this.currentPosition = newPosition;
+      }
+      this.keyPressed.emit("position changed");
+    }
+
+    this.resolve();
+  };
 }
