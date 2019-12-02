@@ -1,5 +1,5 @@
 import { Display } from "rot-js/lib";
-import { LogicalPitches, FeelingPitches, AggressionPitches } from "./data";
+import { AggressionPitches, FeelingPitches, LogicalPitches } from "./data";
 
 enum AttackTypes {
   logic,
@@ -9,6 +9,7 @@ enum AttackTypes {
 export class BossFight {
   public boss: Boss;
   public playerHealth: number;
+  public playerMaxHealth: number;
   private attackOptions: any[];
   private logicalAttackList = LogicalPitches;
   private emotionalAttackList = FeelingPitches;
@@ -16,6 +17,7 @@ export class BossFight {
 
   constructor(fightNumber, currentPlayerHealth: number) {
     this.playerHealth = currentPlayerHealth;
+    this.playerMaxHealth = this.playerHealth;
     switch (fightNumber) {
       case 1: {
         this.boss = new Boss(10, AttackTypes.logic, AttackTypes.feeling);
@@ -33,43 +35,42 @@ export class BossFight {
     this.setFightActions();
   }
 
+  public healthString(current: number, max: number, symbol = "#", width = 10) {
+    return new Array((current / max) * width).fill(symbol).join("");
+  }
+
   public drawDisplay(display: Display, width: number, height: number) {
     let actionBar = "";
     for (let i = 0; i < width; i++) {
       actionBar += "=";
     }
 
-    let bossHealthBar = "";
-    for (let i = 0; i < this.boss.currentHealth; i++) {
-      bossHealthBar += "#";
-    }
+    let bossHealthBar = this.healthString(
+      this.boss.currentHealth,
+      this.boss.maxHealth
+    );
+    let playerHealthBar = this.healthString(
+      this.playerHealth,
+      this.playerMaxHealth
+    );
 
-    let playerHealthBar = "";
-    for (let i = 0; i < this.playerHealth; i++) {
-      playerHealthBar += "#";
-    }
-
-    display.drawText((width * 5) / 32, (height * 15) / 128, bossHealthBar);
+    display.drawText((width * 1) / 8 + 1, (height * 15) / 128, bossHealthBar);
     display.drawText((width * 1) / 8, height / 8, "|__________");
     display.drawText((width * 7) / 8, height / 8, "B");
-    display.drawText((width * 1) / 8, (height * 4) / 8, "@");
-    display.drawText((width * 21) / 32, (height * 63) / 128, playerHealthBar);
-    display.drawText((width * 5) / 8, (height * 4) / 8, "|__________");
-    display.drawText(0, (height * 5) / 8, actionBar);
+    display.drawText((width * 1) / 8, (height * 3) / 8, "@");
     display.drawText(
-      (width * 1) / 16,
-      (height * 11) / 16,
-      this.attackOptions[0].text
+      (width * 5) / 8 + 1,
+      (height * 3) / 8 - 0.25,
+      playerHealthBar
     );
+    display.drawText((width * 5) / 8, (height * 3) / 8, "|__________");
+    display.drawText(0, (height * 4) / 8, actionBar);
     display.drawText(
       (width * 1) / 16,
-      (height * 12) / 16,
-      this.attackOptions[1].text
-    );
-    display.drawText(
-      (width * 1) / 16,
-      (height * 13) / 16,
-      this.attackOptions[2].text
+      (height * 9) / 16,
+      `${this.attackOptions[0].text}\n
+      ${this.attackOptions[1].text}\n
+      ${this.attackOptions[2].text}`
     );
   }
 
