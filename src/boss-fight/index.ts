@@ -36,7 +36,7 @@ export class BossFight {
   }
 
   public healthString(current: number, max: number, symbol = "#", width = 10) {
-    return new Array((current / max) * width).fill(symbol).join("");
+    return new Array(Math.floor((current / max) * width)).fill(symbol).join("");
   }
 
   public drawDisplay(display: Display, width: number, height: number) {
@@ -68,9 +68,7 @@ export class BossFight {
     display.drawText(
       (width * 1) / 16,
       (height * 9) / 16,
-      `${this.attackOptions[0].text}\n
-      ${this.attackOptions[1].text}\n
-      ${this.attackOptions[2].text}`
+      `${this.attackOptions[0].text}\n${this.attackOptions[1].text}\n${this.attackOptions[2].text}`
     );
   }
 
@@ -90,7 +88,7 @@ export class BossFight {
     this.attackOptions = [];
     this.attackOptions[0] = {
       text:
-        "1: " +
+        "%c{aqua}1%c{}: " +
         this.logicalAttackList[
           Math.floor(Math.random() * this.logicalAttackList.length)
         ],
@@ -98,7 +96,7 @@ export class BossFight {
     };
     this.attackOptions[1] = {
       text:
-        "2: " +
+        "%c{aqua}2%c{}: " +
         this.emotionalAttackList[
           Math.floor(Math.random() * this.emotionalAttackList.length)
         ],
@@ -106,7 +104,7 @@ export class BossFight {
     };
     this.attackOptions[2] = {
       text:
-        "3: " +
+        "%c{aqua}3%c{}: " +
         this.agressiveAttackList[
           Math.floor(Math.random() * this.agressiveAttackList.length)
         ],

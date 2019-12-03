@@ -29,7 +29,7 @@ export const AggressionPitches = [
   "All our competitors are complete garbage compared to us.",
   "This reduced price that I’m offering you today is only available until the end of the week.",
   "What can I do to change your mind?",
-  "If I remove the spare parts package does is that a better price point for you?",
+  "If I remove the spare parts package is that a better price point for you?",
   "You, me, a 10,000 trampoline deal. What do you say?",
   "You want to use slides at your theme park? No, no trampolines, thats where its at these days.",
   "If you're not satisfied with your first bounce, you can send it all back.",
